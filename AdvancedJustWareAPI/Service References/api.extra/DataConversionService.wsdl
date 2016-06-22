@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:tns="http://newdawn.com/API" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://newdawn.com/API" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://newdawn.com/API/Imports">
+      <xsd:import schemaLocation="https://training/API/DataConversionService.svc?xsd=xsd0" namespace="http://newdawn.com/API" />
+      <xsd:import schemaLocation="https://training/API/DataConversionService.svc?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="IDataConversionService_DisableAutoGeneration_InputMessage">
+    <wsdl:part name="parameters" element="tns:DisableAutoGeneration" />
+  </wsdl:message>
+  <wsdl:message name="IDataConversionService_DisableAutoGeneration_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DisableAutoGenerationResponse" />
+  </wsdl:message>
+  <wsdl:message name="IDataConversionService_EnableAutoGeneration_InputMessage">
+    <wsdl:part name="parameters" element="tns:EnableAutoGeneration" />
+  </wsdl:message>
+  <wsdl:message name="IDataConversionService_EnableAutoGeneration_OutputMessage">
+    <wsdl:part name="parameters" element="tns:EnableAutoGenerationResponse" />
+  </wsdl:message>
+  <wsdl:message name="IDataConversionService_IsAutoGenerationEnabled_InputMessage">
+    <wsdl:part name="parameters" element="tns:IsAutoGenerationEnabled" />
+  </wsdl:message>
+  <wsdl:message name="IDataConversionService_IsAutoGenerationEnabled_OutputMessage">
+    <wsdl:part name="parameters" element="tns:IsAutoGenerationEnabledResponse" />
+  </wsdl:message>
+  <wsdl:message name="IDataConversionService_TriggerAutoGeneration_InputMessage">
+    <wsdl:part name="parameters" element="tns:TriggerAutoGeneration" />
+  </wsdl:message>
+  <wsdl:portType msc:usingSession="false" name="IDataConversionService">
+    <wsdl:operation name="DisableAutoGeneration">
+      <wsdl:input wsaw:Action="http://newdawn.com/API/IDataConversionService/DisableAutoGeneration" message="tns:IDataConversionService_DisableAutoGeneration_InputMessage" />
+      <wsdl:output wsaw:Action="http://newdawn.com/API/IDataConversionService/DisableAutoGenerationResponse" message="tns:IDataConversionService_DisableAutoGeneration_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="EnableAutoGeneration">
+      <wsdl:input wsaw:Action="http://newdawn.com/API/IDataConversionService/EnableAutoGeneration" message="tns:IDataConversionService_EnableAutoGeneration_InputMessage" />
+      <wsdl:output wsaw:Action="http://newdawn.com/API/IDataConversionService/EnableAutoGenerationResponse" message="tns:IDataConversionService_EnableAutoGeneration_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="IsAutoGenerationEnabled">
+      <wsdl:input wsaw:Action="http://newdawn.com/API/IDataConversionService/IsAutoGenerationEnabled" message="tns:IDataConversionService_IsAutoGenerationEnabled_InputMessage" />
+      <wsdl:output wsaw:Action="http://newdawn.com/API/IDataConversionService/IsAutoGenerationEnabledResponse" message="tns:IDataConversionService_IsAutoGenerationEnabled_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="TriggerAutoGeneration">
+      <wsdl:input wsaw:Action="http://newdawn.com/API/IDataConversionService/TriggerAutoGeneration" message="tns:IDataConversionService_TriggerAutoGeneration_InputMessage" />
+    </wsdl:operation>
+  </wsdl:portType>
+</wsdl:definitions>

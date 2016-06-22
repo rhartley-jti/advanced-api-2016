@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:tns="http://schemas.datacontract.org/2004/07/Ndt.Api" elementFormDefault="qualified" targetNamespace="http://schemas.datacontract.org/2004/07/Ndt.Api" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="ArrayOfKey">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="Key" nillable="true" type="tns:Key" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ArrayOfKey" nillable="true" type="tns:ArrayOfKey" />
+  <xs:complexType name="Key">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="NewCaseID" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="NewID" type="xs:int" />
+      <xs:element minOccurs="0" name="TempID" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="TypeName" nillable="true" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Key" nillable="true" type="tns:Key" />
+  <xs:complexType name="CopyCaseParameters">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="AgencyAddedBy" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="CaseID" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="CaseRelationshipTypeCode" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="CopyCaseAttributes" type="xs:boolean" />
+      <xs:element minOccurs="0" name="CopyCaseNotes" type="xs:boolean" />
+      <xs:element minOccurs="0" name="CopyCaseStatusHistory" type="xs:boolean" />
+      <xs:element minOccurs="0" name="CopyCharges" type="xs:boolean" />
+      <xs:element minOccurs="0" name="CopyFutureEvents" type="xs:boolean" />
+      <xs:element minOccurs="0" name="CopyNonPipInvolvements" type="xs:boolean" />
+      <xs:element minOccurs="0" name="CopyPastEvents" type="xs:boolean" />
+      <xs:element minOccurs="0" name="CopyRcvdDt" type="xs:boolean" />
+      <xs:element minOccurs="0" name="NewPipNameID" nillable="true" type="xs:int" />
+      <xs:element minOccurs="0" name="PipInvolveTypeCode" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="StatusCode" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="TypeCode" nillable="true" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="CopyCaseParameters" nillable="true" type="tns:CopyCaseParameters" />
+</xs:schema>
