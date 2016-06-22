@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="5b70efd3-a853-4b1b-8eb5-b0ac11007bed" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
+  <ClientOptions>
+    <GenerateAsynchronousMethods>false</GenerateAsynchronousMethods>
+    <GenerateTaskBasedAsynchronousMethod>true</GenerateTaskBasedAsynchronousMethod>
+    <EnableDataBinding>true</EnableDataBinding>
+    <ExcludedTypes />
+    <ImportXmlTypes>false</ImportXmlTypes>
+    <GenerateInternalTypes>false</GenerateInternalTypes>
+    <GenerateMessageContracts>false</GenerateMessageContracts>
+    <NamespaceMappings />
+    <CollectionMappings>
+      <CollectionMapping TypeName="System.Collections.Generic.List`1" Category="List" />
+    </CollectionMappings>
+    <GenerateSerializableTypes>true</GenerateSerializableTypes>
+    <Serializer>Auto</Serializer>
+    <UseSerializerForFaults>true</UseSerializerForFaults>
+    <ReferenceAllAssemblies>true</ReferenceAllAssemblies>
+    <ReferencedAssemblies />
+    <ReferencedDataContractTypes />
+    <ServiceContractMappings />
+  </ClientOptions>
+  <MetadataSources>
+    <MetadataSource Address="https://training/API/DataConversionService.svc?wsdl" Protocol="http" SourceId="1" />
+  </MetadataSources>
+  <Metadata>
+    <MetadataFile FileName="DataConversionService.xsd" MetadataType="Schema" ID="004e83ab-61c4-45a6-b5a9-e69de42117c4" SourceId="1" SourceUrl="https://training/API/DataConversionService.svc?xsd=xsd1" />
+    <MetadataFile FileName="DataConversionService.wsdl" MetadataType="Wsdl" ID="e0c7b8df-9c5a-4a8a-8a4a-708b45bce2dc" SourceId="1" SourceUrl="https://training/API/DataConversionService.svc?wsdl=wsdl0" />
+    <MetadataFile FileName="DataConversionService1.wsdl" MetadataType="Wsdl" ID="9e6520b1-cc60-41c9-821a-80c60cdb8dfa" SourceId="1" SourceUrl="https://training/API/DataConversionService.svc?wsdl" />
+    <MetadataFile FileName="DataConversionService1.xsd" MetadataType="Schema" ID="d28b3714-2f3a-4f92-a24c-f972f453edfc" SourceId="1" SourceUrl="https://training/API/DataConversionService.svc?xsd=xsd0" />
+  </Metadata>
+  <Extensions>
+    <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />
+    <ExtensionFile FileName="configuration.svcinfo" Name="configuration.svcinfo" />
+  </Extensions>
+</ReferenceGroup>
