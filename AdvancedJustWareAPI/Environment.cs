@@ -67,7 +67,7 @@ namespace AdvancedJustWareAPI
 		[TestMethod]
 		public void CreateNewCase()
 		{
-			CreationResult result = _apiClient.CreateCases(numberOfCases: 1);
+			ApiCreateResult result = _apiClient.CreateCases(numberOfCases: 1);
 			Assert.IsNotNull(result, "No results");
 			List<Key> keys = result.Keys.ToList();
 			Assert.AreEqual(1, keys.Count, "No keys");

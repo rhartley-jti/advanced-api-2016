@@ -6,6 +6,11 @@ namespace AdvancedJustWareAPI.Extenstions
 {
 	public static class ApiFactory
 	{
+		public const string TC_USER = @"tc\user";
+		public const string TC_USER_PASSWORD = "JustWare5";
+		public const string TC_ADMIN = @"tc\admin";
+		public const string TC_ADMIN_PASSWORD = "JustWare5";
+
 		private static bool _securitySetup;
 
 		private static void ConfigureSecurity()
@@ -14,7 +19,7 @@ namespace AdvancedJustWareAPI.Extenstions
 			_securitySetup = true;
 		}
 
-		public static IJustWareApi CreateApiClient(string username = @"dev\user", string password = "Training2016")
+		public static IJustWareApi CreateApiClient(string username = TC_USER, string password = TC_USER_PASSWORD)
 		{
 			ConfigureSecurity();
 			var client = new JustWareApiClient();
@@ -24,7 +29,7 @@ namespace AdvancedJustWareAPI.Extenstions
 			return client;
 		}
 
-		public static IDataConversionService CreateDataConversionClient(string username = @"dev\admin", string password = "Training2016")
+		public static IDataConversionService CreateDataConversionClient(string username = TC_ADMIN, string password = TC_ADMIN_PASSWORD)
 		{
 			ConfigureSecurity();
 			var client = new DataConversionServiceClient();
