@@ -314,6 +314,67 @@ namespace AdvancedJustWareAPI.Extenstions
 			return agency;
 		}
 
+		public static Name Initialize(this Name name)
+		{
+			name.Operation = OperationType.Insert;
+			name.Last = Guid.NewGuid().ToString();
+			return name;
+		}
+
+		public static Name AddAddress(this Name name, AddressType addressType, string street = "843 S. 100 W", string city = "Logan", string state = "UT", string zip = "84321", string tempID = null)
+		{
+			if (addressType == null) throw new ArgumentNullException(nameof(addressType));
+			if (name.Addresses == null)
+			{
+				name.Addresses = new List<Address>();
+			}
+			name.Addresses.Add(new Address
+			{
+				Operation = OperationType.Insert,
+				TypeCode = addressType.Code,
+				StreetAddress = street,
+				City = city,
+				StateCode = state,
+				Zip = zip,
+				TempID = tempID
+			});
+			return name;
+		}
+
+		public static Name AddPhone(this Name name, PhoneType phoneType, string number = "555-55-5555", string tempID = null)
+		{
+			if (phoneType == null) throw new ArgumentNullException(nameof(phoneType));
+			if (name.Phones == null)
+			{
+				name.Phones = new List<Phone>();
+			}
+			name.Phones.Add(new Phone
+			{
+				Operation = OperationType.Insert,
+				TypeCode = phoneType.Code,
+				Number = number,
+				TempID = tempID
+			});
+			return name;
+		}
+
+		public static Name AddEmail(this Name name, EmailType emailType, string emailAddress = "no-reply@journaltech.com", string tempID = null)
+		{
+			if (emailType == null) throw new ArgumentNullException(nameof(emailType));
+			if (name.Emails == null)
+			{
+				name.Emails = new List<Email>();
+			}
+			name.Emails.Add(new Email
+			{
+				Operation = OperationType.Insert,
+				TypeCode = emailType.Code,
+				Address = emailAddress,
+				TempID = tempID
+			});
+			return name;
+		}
+
 		public static double TimeAction(Action action)
 		{
 			Stopwatch watch = Stopwatch.StartNew();
