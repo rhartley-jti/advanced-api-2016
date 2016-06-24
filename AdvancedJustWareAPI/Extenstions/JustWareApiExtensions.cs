@@ -41,6 +41,7 @@ namespace AdvancedJustWareAPI.Extenstions
 		}
 
 		public static T GetCode<T>(this IJustWareApi client, string query = "1=1")
+			where T : DataContractBase
 		{
 			string methodName = $"Find{typeof(T).Name}s";
 			string fullQuery = $"({query}).Take(1)";
@@ -50,18 +51,18 @@ namespace AdvancedJustWareAPI.Extenstions
 				throw new ApplicationException($"Could not find JustWare API method: {methodName}");
 			}
 
-			IEnumerable<T> results = methodInfo.Invoke(client, new object[] { fullQuery, null }) as IEnumerable<T>;
-			if (results == null)
+			IEnumerable<T> results;
+			try
 			{
-				throw new ApplicationException($"No codes found with query: '{query}' using method: {methodName}");
+				results = methodInfo.Invoke(client, new object[] { fullQuery, null }) as IEnumerable<T>;
+			}
+			catch (Exception exception)
+			{
+				_logger.Error("API call to {0} with query {1} failed. Reason: {2}", methodInfo, query, exception);
+				return null;
 			}
 
-			T code = results.FirstOrDefault();
-			if (code == null)
-			{
-				throw new ApplicationException($"Code was not found with query: '{query}' using method: {methodName}");
-			}
-
+			T code = results?.FirstOrDefault();
 			return code;
 		}
 
@@ -69,24 +70,8 @@ namespace AdvancedJustWareAPI.Extenstions
 		{
 			var keys = new List<Key>();
 			double ellapsedSeconds;
-			var cse = new Case
-			{
-				Operation = OperationType.Insert,
-				StatusCode = _statusType.Code,
-				TypeCode = _caseType.Code,
-				AgencyAddedByCode = _agencyType.Code,
-				StatusDate = DateTime.Now,
-				ReceivedDate = DateTime.Now,
-				CaseInvolvedNames = new List<CaseInvolvedName>
-							{
-								new CaseInvolvedName
-								{
-									Operation = OperationType.Insert,
-									InvolvementCode = _primaryInvolveType.Code,
-									NameID = _currentUserNameID,
-								}
-							}
-			};
+			Case cse = new Case();
+			cse.Initialize();
 			try
 			{
 				ellapsedSeconds = TimeAction(() =>
@@ -121,6 +106,101 @@ namespace AdvancedJustWareAPI.Extenstions
 			_logger.Info("Created name('{0}') in {1} seconds", newName.Last, ellapsedSeconds);
 
 			return new ApiCreateResult(keys, ellapsedSeconds);
+		}
+
+		public static string SubmitCase(this IJustWareApi client, Case cse)
+		{
+			double ellapsedSeconds;
+			string caseID;
+			try
+			{
+				List<Key> keys = new List<Key>();
+				ellapsedSeconds = TimeAction(() =>
+				{
+					keys.AddRange(client.Submit(cse));
+				});
+				caseID = keys.First(k => k.TypeName.Equals("Case", StringComparison.OrdinalIgnoreCase)).NewCaseID;
+			}
+			catch (Exception exception)
+			{
+				_logger.Error(exception);
+				throw;
+			}
+			_logger.Info("Created case {0} in {1} seconds", caseID, ellapsedSeconds);
+			return caseID;
+		}
+
+		public static void Initialize(this Case cse)
+		{
+			cse.Operation = OperationType.Insert;
+			cse.StatusCode = _statusType.Code;
+			cse.TypeCode = _caseType.Code;
+			cse.AgencyAddedByCode = _agencyType.Code;
+			cse.StatusDate = DateTime.Now;
+			cse.ReceivedDate = DateTime.Now;
+			cse.CaseInvolvedNames = new List<CaseInvolvedName>
+			{
+				new CaseInvolvedName
+				{
+					Operation = OperationType.Insert,
+					InvolvementCode = _primaryInvolveType.Code,
+					NameID = _currentUserNameID,
+				}
+			};
+		}
+
+		public static NameAgency GetFirstNameInAgency(this IJustWareApi client, int agencyMasterCode)
+		{
+			try
+			{
+				NameAgency resultNameAgency = null;
+
+				double ellapsedSeconds = TimeAction(() =>
+				{
+					var masterCodeAgencies = client.FindAgencyTypes($"MasterCode = {agencyMasterCode}", null);
+					foreach (AgencyType agency in masterCodeAgencies)
+					{
+						ApplicationPerson appPerson = client.FindApplicationPersons($"AgencyCode = \"{agency.Code}\"", null).FirstOrDefault();
+						if (appPerson == null) continue;
+						resultNameAgency = new NameAgency(appPerson.NameID, agency.Code);
+						break;
+					}
+				});
+				if (resultNameAgency == null) return null;
+
+				_logger.Info("Found name({0}) in agency({1}) with master code {2} in {3} seconds", 
+					resultNameAgency.NameID, 
+					resultNameAgency.AgencyCode,
+					agencyMasterCode, 
+					ellapsedSeconds);
+				return resultNameAgency;
+			}
+			catch (Exception exception)
+			{
+				_logger.Error(exception);
+				throw;
+			}
+		}
+
+		public static AgencyType GetCallerAgencyType(this IJustWareApi client)
+		{
+			try
+			{
+				AgencyType agencyType = null;
+				double ellapsedSeconds = TimeAction(() =>
+				{
+					int nameID = client.GetCallerNameID();
+					ApplicationPerson appPerson = client.FindApplicationPersons($"NameID = {nameID}", null).Single();
+					agencyType = client.FindAgencyTypes($"Code = \"{appPerson.AgencyCode}\"", null).Single();
+				});
+				_logger.Info("Looked up caller agency type in {0} seconds", ellapsedSeconds);
+				return agencyType;
+			}
+			catch (Exception exception)
+			{
+				_logger.Error(exception);
+				throw;
+			}
 		}
 
 		public static ApiCreateResult AddDocumentToCase(this IJustWareApi client, string caseID, string data, string fileName = null)
