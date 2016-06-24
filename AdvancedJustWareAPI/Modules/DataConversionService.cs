@@ -49,7 +49,7 @@ namespace AdvancedJustWareAPI.Modules
 				_dataconversionClient.DisableAutoGeneration();
 				ApiCreateResult result = _apiClient.CreateCases(1);
 				Assert.IsNotNull(result, "Case was not created");
-				string newCaseID = result.GetFirstCaseID();
+				string newCaseID = result.FirstCaseID;
 				Assert.IsNotNull(newCaseID, "No CaseID");
 				_logger.Info("Case created: {0}", newCaseID);
 

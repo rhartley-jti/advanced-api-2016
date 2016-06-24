@@ -20,7 +20,7 @@ namespace AdvancedJustWareAPI.Modules
 		{
 			_client = ApiFactory.CreateApiClient();
 			ApiCreateResult caseCreationResult = _client.CreateCases(1);
-			_caseID = caseCreationResult.GetFirstCaseID();
+			_caseID = caseCreationResult.FirstCaseID;
 			Assert.IsNotNull(_caseID, "Test case was not created");
 
 			ApiCreateResult documentResult = _client.AddDocumentToCase(_caseID, DOWNLOAD_DATA, "download.txt");

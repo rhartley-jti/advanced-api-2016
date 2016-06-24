@@ -106,6 +106,23 @@ namespace AdvancedJustWareAPI.Extenstions
 			return new ApiCreateResult(keys.Where(k => k.TypeName.Equals("Case", StringComparison.OrdinalIgnoreCase)), ellapsedSeconds);
 		}
 
+		public static ApiCreateResult CreateName(this IJustWareApi client)
+		{
+			var newName = new Name
+			{
+				Operation = OperationType.Insert,
+				Last = Guid.NewGuid().ToString()
+			};
+			List<Key> keys = null;
+			double ellapsedSeconds = TimeAction(() =>
+			{
+				keys = client.Submit(newName);
+			});
+			_logger.Info("Created name('{0}') in {1} seconds", newName.Last, ellapsedSeconds);
+
+			return new ApiCreateResult(keys, ellapsedSeconds);
+		}
+
 		public static ApiCreateResult AddDocumentToCase(this IJustWareApi client, string caseID, string data, string fileName = null)
 		{
 			var document = new CaseDocument
@@ -178,7 +195,7 @@ namespace AdvancedJustWareAPI.Extenstions
 			}
 		}
 
-		private static double TimeAction(Action action)
+		public static double TimeAction(Action action)
 		{
 			Stopwatch watch = Stopwatch.StartNew();
 			action.Invoke();

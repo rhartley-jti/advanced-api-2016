@@ -16,9 +16,35 @@ namespace AdvancedJustWareAPI.Extenstions
 
 		public double EllapsedSeconds { get; private set; }
 
-		public string GetFirstCaseID()
+		private string _firstCaseID;
+		public string FirstCaseID
 		{
-			return Keys.FirstOrDefault(k => k.TypeName.Equals("Case"))?.NewCaseID;
+			get
+			{
+				if (string.IsNullOrWhiteSpace(_firstCaseID))
+				{
+					_firstCaseID = Keys.FirstOrDefault(k => k.TypeName.Equals("Case"))?.NewCaseID;
+				}
+				return _firstCaseID;
+			}
+		}
+
+		private int _firstNameID;
+
+		public int FirstNameID
+		{
+			get
+			{
+				if (_firstNameID == default(int))
+				{
+					int? firstNameID = GetFirstEntityID<Name>();
+					if (firstNameID.HasValue)
+					{
+						_firstNameID = firstNameID.Value;
+					}
+				}
+				return _firstNameID;
+			}
 		}
 
 		public int? GetFirstEntityID<T>()

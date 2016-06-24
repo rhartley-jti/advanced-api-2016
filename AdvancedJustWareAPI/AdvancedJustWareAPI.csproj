@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Modules\CopyCase.cs" />
     <Compile Include="Modules\DataConversionService.cs" />
     <Compile Include="Environment.cs" />
     <Compile Include="Extenstions\ApiFactory.cs" />
