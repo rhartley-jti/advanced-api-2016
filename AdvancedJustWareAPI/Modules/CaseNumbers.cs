@@ -11,11 +11,24 @@ namespace AdvancedJustWareAPI.Modules
 	public class CaseNumbers
 	{
 		private IJustWareApi _client;
+		private NumberType _numberType;
+		private Case _newCase;
+		private InvolveType _lawInvolveType;
+		private NameAgency _officerData;
 
 		[TestInitialize]
 		public void Initialize()
 		{
 			_client = ApiFactory.CreateApiClient();
+			_numberType = _client.GetCode<NumberType>("MasterCode = 3");
+			Assert.IsNotNull(_numberType, "Number type with master code 3 not found");
+			_lawInvolveType = _client.GetCode<InvolveType>("MasterCode = 5");
+			Assert.IsNotNull(_lawInvolveType, "Law involvment type not found");
+			
+			_newCase = new Case().Initialize();
+
+			_officerData = _client.GetFirstNameInAgency(agencyMasterCode: 3);
+			Assert.IsNotNull(_officerData, "Could not find name in agency");
 		}
 
 		[TestCleanup]
@@ -30,26 +43,20 @@ namespace AdvancedJustWareAPI.Modules
 		{
 			AgencyType agencyType = _client.GetCode<AgencyType>("MasterCode = 3");
 			Assert.IsNotNull(agencyType, "Agency type not found");
-			NumberType numberType = _client.GetCode<NumberType>("MasterCode = 3");
-			Assert.IsNotNull(numberType, "Number type not found");
 
 			Agency agency = new Agency
 			{
 				Operation = OperationType.Insert,
 				AgencyCode = agencyType.Code,
-				NumberTypeCode = numberType.Code,
+				NumberTypeCode = _numberType.Code,
 				Number = "L16-123",
 				Lead = true,
 				Active = true
 			};
-			Case newCase = new Case();
-			newCase.Initialize();
-			newCase.Agencies = new List<Agency>
-			{
-				agency
-			};
+			
+			_newCase.AddAgency(agency);
 
-			string caseID = _client.SubmitCase(newCase);
+			string caseID = _client.SubmitCase(_newCase);
 			Case actualCase = _client.GetCase(caseID, new List<string> { "Agencies" });
 			Assert.IsNotNull(actualCase, $"Case({caseID}) not found");
 			Assert.AreEqual(1, actualCase.Agencies.Count, "No agencies");
@@ -59,43 +66,43 @@ namespace AdvancedJustWareAPI.Modules
 		[TestMethod]
 		public void AgencyAlsoUsedOnCaseInvolvement()
 		{
-			NameAgency officer = _client.GetFirstNameInAgency(agencyMasterCode: 3);
-			Assert.IsNotNull(officer, "Could not find name in agency");
-			NumberType numberType = _client.GetCode<NumberType>("MasterCode = 3");
-			Assert.IsNotNull(numberType, "Number type not found");
-			InvolveType lawInvolveType = _client.GetCode<InvolveType>("MasterCode = 5");
+			Agency lawAgency = new Agency().Initialize(_officerData.AgencyType, _numberType);
 
-			Agency lawAgency = new Agency
-			{
-				Operation = OperationType.Insert,
-				AgencyCode = officer.AgencyCode,
-				NumberTypeCode = numberType.Code,
-				Lead = true,
-				Active = true
-			};
+			_newCase
+				.AddAgency(lawAgency)
+				.AddInvolvement(_lawInvolveType, _officerData.NameID, lawAgency);
 
-			Case newCase = new Case();
-			newCase.Initialize();
-			newCase.CaseInvolvedNames.Add(new CaseInvolvedName
-			{
-				Operation = OperationType.Insert,
-				InvolvementCode = lawInvolveType.Code,
-				NameID = officer.NameID,
-				CaseAgency = lawAgency  //Do not set the AgencyCode property.  Will not work
-			});
-			newCase.Agencies = new List<Agency>
-			{
-				lawAgency
-			};
-
-			string caseID = _client.SubmitCase(newCase);
+			string caseID = _client.SubmitCase(_newCase);
 
 			Case actualCase = _client.GetCase(caseID, new List<string> { "CaseInvolvedNames" });
 			Assert.IsNotNull(actualCase, "Case not found");
 			Assert.AreEqual(2, actualCase.CaseInvolvedNames.Count, "Case involvements");
-			CaseInvolvedName officerInvolvement = actualCase.CaseInvolvedNames.FirstOrDefault(i => i.NameID == officer.NameID);
+			CaseInvolvedName officerInvolvement = actualCase.CaseInvolvedNames.FirstOrDefault(i => i.NameID == _officerData.NameID);
 			Assert.IsNotNull(officerInvolvement, "Could not find officer involvement");
-			Assert.AreEqual(officer.AgencyCode, officerInvolvement.AgencyCode, "Officer involvement agency code");
+			Assert.AreEqual(_officerData.AgencyType.Code, officerInvolvement.AgencyCode, "Officer involvement agency code");
+			Assert.AreEqual(_officerData.AgencyType.MasterCode, officerInvolvement.InvolvementCodeType, "Agency type lines up with invovlement type");
+		}
+
+		[TestMethod]
+		public void AssigningAgencyToInvolvmentThatDoesNotMatch()
+		{
+			AgencyType callerAgencyType = _client.GetCallerAgencyType();
+
+			Agency agency = new Agency().Initialize(callerAgencyType, _numberType);
+
+			_newCase
+				.AddAgency(agency)
+				.AddInvolvement(_lawInvolveType, _officerData.NameID, agency);
+
+			string caseID = _client.SubmitCase(_newCase);
+
+			Case actualCase = _client.GetCase(caseID, new List<string> { "CaseInvolvedNames" });
+			Assert.IsNotNull(actualCase, "Case not found");
+			Assert.AreEqual(2, actualCase.CaseInvolvedNames.Count, "Case involvements");
+			CaseInvolvedName officerInvolvement = actualCase.CaseInvolvedNames.FirstOrDefault(i => i.NameID == _officerData.NameID);
+			Assert.IsNotNull(officerInvolvement, "Could not find officer involvement");
+			Assert.AreEqual(callerAgencyType.Code, officerInvolvement.AgencyCode, "Officer involvement agency code");
+			Assert.AreNotEqual(callerAgencyType.MasterCode, officerInvolvement.InvolvementCodeType, "Expected agency and involvment codes to be different");
 		}
 	}
 }

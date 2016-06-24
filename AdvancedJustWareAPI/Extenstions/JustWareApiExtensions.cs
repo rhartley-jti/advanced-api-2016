@@ -130,25 +130,6 @@ namespace AdvancedJustWareAPI.Extenstions
 			return caseID;
 		}
 
-		public static void Initialize(this Case cse)
-		{
-			cse.Operation = OperationType.Insert;
-			cse.StatusCode = _statusType.Code;
-			cse.TypeCode = _caseType.Code;
-			cse.AgencyAddedByCode = _agencyType.Code;
-			cse.StatusDate = DateTime.Now;
-			cse.ReceivedDate = DateTime.Now;
-			cse.CaseInvolvedNames = new List<CaseInvolvedName>
-			{
-				new CaseInvolvedName
-				{
-					Operation = OperationType.Insert,
-					InvolvementCode = _primaryInvolveType.Code,
-					NameID = _currentUserNameID,
-				}
-			};
-		}
-
 		public static NameAgency GetFirstNameInAgency(this IJustWareApi client, int agencyMasterCode)
 		{
 			try
@@ -162,7 +143,7 @@ namespace AdvancedJustWareAPI.Extenstions
 					{
 						ApplicationPerson appPerson = client.FindApplicationPersons($"AgencyCode = \"{agency.Code}\"", null).FirstOrDefault();
 						if (appPerson == null) continue;
-						resultNameAgency = new NameAgency(appPerson.NameID, agency.Code);
+						resultNameAgency = new NameAgency(appPerson.NameID, agency);
 						break;
 					}
 				});
@@ -170,7 +151,7 @@ namespace AdvancedJustWareAPI.Extenstions
 
 				_logger.Info("Found name({0}) in agency({1}) with master code {2} in {3} seconds", 
 					resultNameAgency.NameID, 
-					resultNameAgency.AgencyCode,
+					resultNameAgency.AgencyType.Code,
 					agencyMasterCode, 
 					ellapsedSeconds);
 				return resultNameAgency;
@@ -225,6 +206,22 @@ namespace AdvancedJustWareAPI.Extenstions
 			return new ApiCreateResult(keys, ellapsedSeconds);
 		}
 
+		public static string DownloadFromApi(this IJustWareApi client, CaseDocument document, string username = ApiFactory.TC_USER, string password = ApiFactory.TC_USER_PASSWORD)
+		{
+			using (WebClient webClient = new WebClient())
+			{
+				NetworkCredential networkCredential = new NetworkCredential
+				{
+					UserName = username,
+					Password = password
+				};
+				webClient.Credentials = networkCredential;
+
+				string downloadUrl = client.RequestFileDownload(document);
+				return webClient.DownloadString(downloadUrl);
+			}
+		}
+
 		public static void UploadToApi(this string url, string data)
 		{
 			HttpWebRequest headRequest = (HttpWebRequest)WebRequest.Create(url);
@@ -259,20 +256,62 @@ namespace AdvancedJustWareAPI.Extenstions
 			uploadRequest.GetResponse();
 		}
 
-		public static string DownloadFromApi(this IJustWareApi client, CaseDocument document, string username = ApiFactory.TC_USER, string password = ApiFactory.TC_USER_PASSWORD)
+		public static Case Initialize(this Case cse)
 		{
-			using (WebClient webClient = new WebClient())
+			cse.Operation = OperationType.Insert;
+			cse.StatusCode = _statusType.Code;
+			cse.TypeCode = _caseType.Code;
+			cse.AgencyAddedByCode = _agencyType.Code;
+			cse.StatusDate = DateTime.Now;
+			cse.ReceivedDate = DateTime.Now;
+			cse.CaseInvolvedNames = new List<CaseInvolvedName>
 			{
-				NetworkCredential networkCredential = new NetworkCredential
+				new CaseInvolvedName
 				{
-					UserName = username,
-					Password = password
-				};
-				webClient.Credentials = networkCredential;
+					Operation = OperationType.Insert,
+					InvolvementCode = _primaryInvolveType.Code,
+					NameID = _currentUserNameID,
+				}
+			};
+			return cse;
+		}
 
-				string downloadUrl = client.RequestFileDownload(document);
-				return webClient.DownloadString(downloadUrl);
+		public static Case AddInvolvement(this Case cse, InvolveType involveType, int nameID, Agency agency = null)
+		{
+			if (involveType == null) throw new ArgumentNullException(nameof(involveType));
+			if (nameID == default(int)) throw new ArgumentOutOfRangeException(nameof(nameID), "Missing valid NameID");
+			if (cse.CaseInvolvedNames == null)
+			{
+				cse.CaseInvolvedNames = new List<CaseInvolvedName>();
 			}
+			cse.CaseInvolvedNames.Add(new CaseInvolvedName
+			{
+				Operation = OperationType.Insert,
+				InvolvementCode = involveType.Code,
+				NameID = nameID,
+				CaseAgency = agency
+			});
+			return cse;
+		}
+
+		public static Case AddAgency(this Case cse, Agency agency)
+		{
+			if (agency == null) throw new ArgumentNullException(nameof(agency));
+			if (cse.Agencies == null)
+			{
+				cse.Agencies = new List<Agency>();
+			}
+			cse.Agencies.Add(agency);
+			return cse;
+		}
+
+		public static Agency Initialize(this Agency agency, AgencyType agencyType, NumberType numberType, string number = null)
+		{
+			agency.Operation = OperationType.Insert;
+			agency.AgencyCode = agencyType.Code;
+			agency.NumberTypeCode = numberType.Code;
+			agency.Number = number;
+			return agency;
 		}
 
 		public static double TimeAction(Action action)

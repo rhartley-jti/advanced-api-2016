@@ -1,15 +1,17 @@
+using AdvancedJustWareAPI.api;
+
 namespace AdvancedJustWareAPI.Extenstions
 {
 	public class NameAgency
 	{
-		public NameAgency(int nameID, string agencyCode)
+		public NameAgency(int nameID, AgencyType agencyType)
 		{
 			NameID = nameID;
-			AgencyCode = agencyCode;
+			AgencyType = agencyType;
 		}
 
 		public int NameID { get; protected set; }
 
-		public string AgencyCode { get; protected set; }
+		public AgencyType AgencyType { get; protected set; }
 	}
 }
