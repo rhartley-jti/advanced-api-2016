@@ -11,27 +11,17 @@ namespace AdvancedJustWareAPI.Modules
 	public class Keys
 	{
 		private IJustWareApi _client;
-		private AddressType _addressType;
-		private EmailType _emailType;
-		private PhoneType _phoneType;
 
 		[TestInitialize]
 		public void Initialize()
 		{
-			_client = ApiFactory.CreateApiClient();
-			_addressType = _client.GetCode<AddressType>();
-			Assert.IsNotNull(_addressType, "No address types");
-			_emailType = _client.GetCode<EmailType>();
-			Assert.IsNotNull(_emailType, "No email types");
-			_phoneType = _client.GetCode<PhoneType>();
-			Assert.IsNotNull(_phoneType, "No phone types");
+			_client = ApiClientFactory.CreateApiClient();
 		}
 
 		[TestCleanup]
 		public void TestCleanup()
 		{
-			IDisposable disposable = _client as IDisposable;
-			disposable?.Dispose();
+			_client.Dispose();
 		}
 
 		[TestMethod]
@@ -52,10 +42,10 @@ namespace AdvancedJustWareAPI.Modules
 		{
 			var name = new Name()
 				.Initialize()
-				.AddAddress(_addressType)
-				.AddEmail(_emailType)
-				.AddEmail(_emailType, "api@journaltech.com")
-				.AddPhone(_phoneType);
+				.AddAddress()
+				.AddEmail()
+				.AddEmail("api@journaltech.com")
+				.AddPhone();
 
 			List<Key> keys = _client.Submit(name);
 
@@ -86,12 +76,12 @@ namespace AdvancedJustWareAPI.Modules
 			const string MY_TEMP_ID = "TMP-1";
 			var name = new Name()
 				.Initialize()
-				.AddEmail(_emailType)
-				.AddEmail(_emailType, "api@journaltech.com", tempID: MY_TEMP_ID)
-				.AddEmail(_emailType)
-				.AddPhone(_phoneType)
-				.AddPhone(_phoneType, "877-587-8927", tempID: MY_TEMP_ID)
-				.AddPhone(_phoneType);
+				.AddEmail()
+				.AddEmail("api@journaltech.com", tempID: MY_TEMP_ID)
+				.AddEmail()
+				.AddPhone()
+				.AddPhone("877-587-8927", tempID: MY_TEMP_ID)
+				.AddPhone();
 
 			List<Key> keys = _client.Submit(name);
 

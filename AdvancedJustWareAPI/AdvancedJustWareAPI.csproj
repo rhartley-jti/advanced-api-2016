@@ -49,9 +49,10 @@
     <Compile Include="Modules\CopyCase.cs" />
     <Compile Include="Modules\DataConversionService.cs" />
     <Compile Include="Environment.cs" />
-    <Compile Include="Extenstions\ApiFactory.cs" />
-    <Compile Include="Extenstions\JustWareApiExtensions.cs" />
+    <Compile Include="Extenstions\ApiClientFactory.cs" />
+    <Compile Include="Extenstions\ApiExtensions.cs" />
     <Compile Include="Modules\Documents.cs" />
+    <Compile Include="Modules\Financials.cs" />
     <Compile Include="Modules\Keys.cs" />
     <Compile Include="Modules\Queries.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using AdvancedJustWareAPI.api;
 using AdvancedJustWareAPI.api.extra;
 using AdvancedJustWareAPI.Extenstions;
@@ -11,32 +10,31 @@ namespace AdvancedJustWareAPI
 	[TestClass]
 	public class Environment
 	{
-		private IJustWareApi _apiClient;
+		private IJustWareApi _client;
 
 		[TestInitialize]
 		public void Initialize()
 		{
-			_apiClient = ApiFactory.CreateApiClient();
+			_client = ApiClientFactory.CreateApiClient();
 		}
 
 		[TestCleanup]
 		public void TestCleanup()
 		{
-			IDisposable disposable = _apiClient as IDisposable;
-			disposable?.Dispose();
+			_client.Dispose();
 		}
 
 		[TestMethod]
 		public void CurrentUserNameID()
 		{
-			int currentNameID = _apiClient.GetCallerNameID();
+			int currentNameID = _client.GetCallerNameID();
 			Assert.IsTrue(currentNameID > 0, "NameID was not greater than zero");
 		}
 
 		[TestMethod]
 		public void CurrentUserNameEntity()
 		{
-			Name currentName = _apiClient.GetName(_apiClient.GetCallerNameID(), null);
+			Name currentName = _client.GetName(_client.GetCallerNameID(), null);
 			Assert.IsNotNull(currentName, "Name entity for current user not found");
 			Assert.AreEqual("JustWare User", currentName.FullName, "Full Name");
 		}
@@ -50,7 +48,7 @@ namespace AdvancedJustWareAPI
 				Operation = OperationType.Insert,
 				Last = lastName
 			};
-			List<Key> keys = _apiClient.Submit(newName);
+			List<Key> keys = _client.Submit(newName);
 
 			Assert.AreEqual(1, keys.Count, "Expected one key");
 			Assert.AreEqual("Name", keys[0].TypeName, "Key TypeName");
@@ -60,7 +58,7 @@ namespace AdvancedJustWareAPI
 		[TestMethod]
 		public void FindName()
 		{
-			List<Name> results = _apiClient.FindNames("Last = \"JustWare User\"", null);
+			List<Name> results = _client.FindNames("Last = \"JustWare User\"", null);
 			Assert.AreEqual(1, results.Count, "Did not find name");
 		}
 
@@ -72,10 +70,10 @@ namespace AdvancedJustWareAPI
 			Case cse = new Case()
 				.Initialize()
 				.AddDocument(document);
-			Case actualCase = _apiClient.SubmitCase(cse);
+			Case actualCase = _client.SubmitCase(cse);
 			Assert.IsNotNull(actualCase.ID, "No Case");
 
-			string actualDocumentContents = _apiClient.DownloadFromApi(document);
+			string actualDocumentContents = _client.DownloadFromApi(document);
 
 			Assert.AreEqual(TEST_DOCUMENT, actualDocumentContents, "Document contents");
 		}
@@ -83,9 +81,17 @@ namespace AdvancedJustWareAPI
 		[TestMethod]
 		public void IsAutoGenerationEnabled()
 		{
-			IDataConversionService dataConvertionClient = ApiFactory.CreateDataConversionClient();
-			bool result = dataConvertionClient.IsAutoGenerationEnabled();
-			Assert.IsTrue(result, "AutoGeneration is not enabled");
+			IDataConversionService client = null;
+			try
+			{
+				client = ApiClientFactory.CreateDataConversionClient();
+				bool result = client.IsAutoGenerationEnabled();
+				Assert.IsTrue(result, "AutoGeneration is not enabled");
+			}
+			finally
+			{
+				client.Dispose();
+			}
 		}
 	}
 }

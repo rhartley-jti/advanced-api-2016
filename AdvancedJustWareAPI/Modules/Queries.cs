@@ -12,18 +12,29 @@ namespace AdvancedJustWareAPI.Modules
 	public class Queries
 	{
 		private IJustWareApi _client;
+		private int _yr;
+		private int _month;
+		private int _day;
+		private int _hour;
+		private int _min;
+		private int _sec;
 
 		[TestInitialize]
 		public void Initialize()
 		{
-			_client = ApiFactory.CreateApiClient();
+			_client = ApiClientFactory.CreateApiClient();
+			_yr = DateTime.Now.Year;
+			_month = DateTime.Now.Month;
+			_day = DateTime.Now.Day;
+			_hour = DateTime.Now.Hour;
+			_min = DateTime.Now.Minute;
+			_sec = DateTime.Now.Second;
 		}
 
 		[TestCleanup]
 		public void TestCleanup()
 		{
-			IDisposable disposable = _client as IDisposable;
-			disposable?.Dispose();
+			_client.Dispose();
 		}
 
 		[TestMethod]
@@ -46,12 +57,6 @@ namespace AdvancedJustWareAPI.Modules
 		[TestMethod]
 		public void DatesAndTimes()
 		{
-			int yr = DateTime.Now.Year;
-			int month = DateTime.Now.Month;
-			int day = DateTime.Now.Day;
-			int hour = DateTime.Now.Hour;
-			int min = DateTime.Now.Minute;
-			int sec = DateTime.Now.Second;
 			Case cse = _client.SubmitCase(new Case()
 				.Initialize()
 				.AddEvent(new CaseEvent().Initialize(DateTime.Now.AddDays(-5)))
@@ -61,13 +66,13 @@ namespace AdvancedJustWareAPI.Modules
 				.AddEvent(new CaseEvent().Initialize(DateTime.Now.AddMinutes(-20))));
 
 			//Find all events in the future
-			string futureQuery = $"CaseID = \"{cse.ID}\" && EventDate > DateTime({yr},{month},{day})";
+			string futureQuery = $"CaseID = \"{cse.ID}\" && EventDate > DateTime({_yr},{_month},{_day})";
 			List<CaseEvent> futureEvents = _client.FindCaseEvents(futureQuery, null);
 			Assert.AreEqual(4, futureEvents.Count, "Future events");
 
 			//Find all past events
 			//Notice you can use both && or and for logic, = or == for equality
-			string pastQuery = $"CaseID == \"{cse.ID}\" and EventDate < DateTime({yr},{month},{day})";
+			string pastQuery = $"CaseID == \"{cse.ID}\" and EventDate < DateTime({_yr},{_month},{_day})";
 			List<CaseEvent> pastEvents = _client.FindCaseEvents(pastQuery, null);
 			Assert.AreEqual(1, pastEvents.Count, "Past events");
 
@@ -75,8 +80,8 @@ namespace AdvancedJustWareAPI.Modules
 			string todayQuery 
 				= $"CaseID = \"{cse.ID}\"" + 
 				//When using time you must specify all three (hour, minute, and second)
-				$" && EventDate > DateTime({yr},{month},{day},{hour},{min},{sec})" +
-				$" && EventDate < DateTime({yr},{month},{day + 1})";
+				$" && EventDate > DateTime({_yr},{_month},{_day},{_hour},{_min},{_sec})" +
+				$" && EventDate < DateTime({_yr},{_month},{_day + 1})";
 			List<CaseEvent> todayEvents = _client.FindCaseEvents(todayQuery, null);
 			Assert.AreEqual(2, todayEvents.Count, "Today events");
 		}

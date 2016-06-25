@@ -7,11 +7,12 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using AdvancedJustWareAPI.api;
+using AdvancedJustWareAPI.api.extra;
 using NLog;
 
 namespace AdvancedJustWareAPI.Extenstions
 {
-	public static class JustWareApiExtensions
+	public static class ApiExtensions
 	{
 		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 		private static readonly InvolveType _primaryInvolveType;
@@ -21,14 +22,17 @@ namespace AdvancedJustWareAPI.Extenstions
 		private static readonly DocumentType _documentType;
 		private static readonly EventType _eventType;
 		private static readonly AddressType _addressType;
-		private static readonly int _currentUserNameID;
+		private static readonly EmailType _emailType;
+		private static readonly PhoneType _phoneType;
+		private static readonly Statute _statute;
+		private static readonly int _callerNameID;
 
-		static JustWareApiExtensions()
+		static ApiExtensions()
 		{
 			IJustWareApi client = null;
 			try
 			{
-				client = ApiFactory.CreateApiClient(ensureAutoGenerationEnabled: false);
+				client = ApiClientFactory.CreateApiClient(ensureAutoGenerationEnabled: false);
 				_primaryInvolveType = client.GetCode<InvolveType>("MasterCode = 1");
 				_statusType = client.GetCode<CaseStatusType>("MasterCode = 1");
 				_caseType = client.GetCode<CaseType>();
@@ -36,7 +40,10 @@ namespace AdvancedJustWareAPI.Extenstions
 				_documentType = client.GetCode<DocumentType>();
 				_eventType = client.GetCode<EventType>("MasterCode = 1");
 				_addressType = client.GetCode<AddressType>();
-				_currentUserNameID = client.GetCallerNameID();
+				_emailType = client.GetCode<EmailType>();
+				_phoneType = client.GetCode<PhoneType>();
+				_statute = client.GetStatute();
+				_callerNameID = client.GetCallerNameID();
 			}
 			catch (Exception exception)
 			{
@@ -48,6 +55,20 @@ namespace AdvancedJustWareAPI.Extenstions
 				IDisposable disposable = client as IDisposable;
 				disposable?.Dispose();
 			}
+		}
+
+		public static int CallerNameID => _callerNameID;
+
+		public static void Dispose(this IDataConversionService client)
+		{
+			IDisposable disposable = client as IDisposable;
+			disposable?.Dispose();
+		}
+
+		public static void Dispose(this IJustWareApi client)
+		{
+			IDisposable disposable = client as IDisposable;
+			disposable?.Dispose();
 		}
 
 		public static T GetCode<T>(this IJustWareApi client, string query = "1=1")
@@ -108,6 +129,7 @@ namespace AdvancedJustWareAPI.Extenstions
 				{
 					List<Key> keys = client.Submit(name ?? new Name().Initialize());
 					actualName.ID = keys.Single(k => k.TypeName.Equals(nameof(Name))).NewID;
+					actualName.Operation = OperationType.None;
 				});
 				_logger.Info("Created name('{0}') in {1} seconds", actualName.ID, ellapsedSeconds);
 			}
@@ -123,22 +145,39 @@ namespace AdvancedJustWareAPI.Extenstions
 			Case actualCase = cse ?? new Case().Initialize();
 			try
 			{
-				actualCase.ProcessCaseDocuments(doc =>
+				actualCase.ProcessCollectionOfType<CaseDocument>(doc =>
 				{
 					doc.Operation = OperationType.None;
+				});
+				actualCase.ProcessCollectionOfType<Charge>(charge =>
+				{
+					charge.TempID = Guid.NewGuid().ToString();
 				});
 				double ellapsedSeconds = TimeAction(() =>
 				{
 					var keys = client.Submit(actualCase);
 					actualCase.ID = keys.First(k => k.TypeName.Equals(nameof(Case))).NewCaseID;
-					actualCase.ProcessCaseDocuments(doc =>
+					actualCase.Operation = OperationType.None;
+					actualCase.ProcessCollectionOfType<CaseDocument>(doc =>
 					{
 						doc.CaseID = actualCase.ID;
 						client.UploadDocument(doc);
 					});
+					actualCase.ProcessCollectionOfType<Charge>(charge =>
+					{
+						Key chargeKey = keys.FirstOrDefault(k => k.TempID != null && k.TempID.Equals(charge.TempID));
+						if (chargeKey == null)
+						{
+							_logger.Warn("Charge with TempID '{0}' was not found", charge.TempID);
+							return;
+						}
+						charge.ID = chargeKey.NewID;
+						charge.ChargeInvolvedNames = client.FindChargeInvolvedNames($"ChargeID = {charge.ID}", null);
+						charge.Operation = OperationType.None;
+					});
 				});
 
-				_logger.Info("Created case {0} with {1} documents in {2} seconds", 
+				_logger.Info("Created case {0} with {1} documents in {2} seconds",
 					actualCase.ID,
 					actualCase.CaseDocuments?.Count ?? 0,
 					ellapsedSeconds);
@@ -225,7 +264,7 @@ namespace AdvancedJustWareAPI.Extenstions
 			}
 		}
 
-		public static string DownloadFromApi(this IJustWareApi client, CaseDocument document, string username = ApiFactory.TC_USER, string password = ApiFactory.TC_USER_PASSWORD)
+		public static string DownloadFromApi(this IJustWareApi client, CaseDocument document, string username = ApiClientFactory.TC_USER, string password = ApiClientFactory.TC_USER_PASSWORD)
 		{
 			using (WebClient webClient = new WebClient())
 			{
@@ -275,23 +314,28 @@ namespace AdvancedJustWareAPI.Extenstions
 			uploadRequest.GetResponse();
 		}
 
-		public static Case Initialize(this Case cse)
+		public static Case Initialize(this Case cse, Name primaryName = null)
 		{
+			CaseInvolvedName involvement = new CaseInvolvedName
+			{
+				Operation = OperationType.Insert,
+				InvolvementCode = _primaryInvolveType.Code,
+			};
+			if (primaryName != null)
+			{
+				involvement.Name = primaryName;
+			}
+			else
+			{
+				involvement.NameID = _callerNameID;
+			}
 			cse.Operation = OperationType.Insert;
 			cse.StatusCode = _statusType.Code;
 			cse.TypeCode = _caseType.Code;
 			cse.AgencyAddedByCode = _agencyType.Code;
 			cse.StatusDate = DateTime.Now;
 			cse.ReceivedDate = DateTime.Now;
-			cse.CaseInvolvedNames = new List<CaseInvolvedName>
-			{
-				new CaseInvolvedName
-				{
-					Operation = OperationType.Insert,
-					InvolvementCode = _primaryInvolveType.Code,
-					NameID = _currentUserNameID,
-				}
-			};
+			cse.CaseInvolvedNames = new List<CaseInvolvedName> { involvement };
 			return cse;
 		}
 
@@ -354,6 +398,21 @@ namespace AdvancedJustWareAPI.Extenstions
 			return cse;
 		}
 
+		public static Case AddCharge(this Case cse, Charge charge = null)
+		{
+			if (charge == null)
+			{
+				charge = new Charge().Initialize(number: 1);
+			}
+
+			if (cse.Charges == null)
+			{
+				cse.Charges = new List<Charge>();
+			}
+			cse.Charges.Add(charge);
+			return cse;
+		}
+
 		public static Agency Initialize(this Agency agency, AgencyType agencyType, NumberType numberType, string number = null)
 		{
 			agency.Operation = OperationType.Insert;
@@ -389,9 +448,8 @@ namespace AdvancedJustWareAPI.Extenstions
 			return name;
 		}
 
-		public static Name AddPhone(this Name name, PhoneType phoneType, string number = "555-55-5555", string tempID = null)
+		public static Name AddPhone(this Name name, string number = "555-55-5555", PhoneType phoneType = null, string tempID = null)
 		{
-			if (phoneType == null) throw new ArgumentNullException(nameof(phoneType));
 			if (name.Phones == null)
 			{
 				name.Phones = new List<Phone>();
@@ -399,16 +457,15 @@ namespace AdvancedJustWareAPI.Extenstions
 			name.Phones.Add(new Phone
 			{
 				Operation = OperationType.Insert,
-				TypeCode = phoneType.Code,
+				TypeCode = phoneType?.Code ?? _phoneType.Code,
 				Number = number,
 				TempID = tempID
 			});
 			return name;
 		}
 
-		public static Name AddEmail(this Name name, EmailType emailType, string emailAddress = "no-reply@journaltech.com", string tempID = null)
+		public static Name AddEmail(this Name name, string emailAddress = "no-reply@journaltech.com", EmailType emailType = null, string tempID = null)
 		{
-			if (emailType == null) throw new ArgumentNullException(nameof(emailType));
 			if (name.Emails == null)
 			{
 				name.Emails = new List<Email>();
@@ -416,7 +473,7 @@ namespace AdvancedJustWareAPI.Extenstions
 			name.Emails.Add(new Email
 			{
 				Operation = OperationType.Insert,
-				TypeCode = emailType.Code,
+				TypeCode = emailType?.Code ?? _emailType.Code,
 				Address = emailAddress,
 				TempID = tempID
 			});
@@ -444,6 +501,47 @@ namespace AdvancedJustWareAPI.Extenstions
 			return evt;
 		}
 
+		public static Charge Initialize(this Charge charge, short number, string caseID = null)
+		{
+			charge.Operation = OperationType.Insert;
+			charge.ChargeNumber = number;
+			charge.StatuteID = _statute.ID;
+			charge.CaseID = caseID;
+			return charge;
+		}
+
+		public static Statute Initialize(this Statute statute, string code = "JTI-1", string description = "Test Statute")
+		{
+			statute.Operation = OperationType.Insert;
+			statute.Code = code;
+			statute.Description = description;
+			return statute;
+		}
+
+		public static Statute GetStatute(this IJustWareApi client)
+		{
+			Statute statute = client.GetCode<Statute>();
+
+			if (statute != null) return statute;
+
+			IJustWareApi adminClient = null;
+			try
+			{
+				//Statutes require Admin level to insert, modify, or delete
+				adminClient = ApiClientFactory
+					.CreateApiClient(username: ApiClientFactory.TC_ADMIN, password: ApiClientFactory.TC_ADMIN_PASSWORD);
+				statute = new Statute().Initialize();
+				List<Key> keys = adminClient.Submit(statute);
+				statute.ID = keys.Single(k => k.TypeName.Equals(nameof(Statute))).NewID;
+				statute.Operation = OperationType.None;
+				return statute;
+			}
+			finally
+			{
+				adminClient.Dispose();
+			}
+		}
+
 		public static double TimeAction(Action action)
 		{
 			Stopwatch watch = Stopwatch.StartNew();
@@ -453,12 +551,17 @@ namespace AdvancedJustWareAPI.Extenstions
 			return watch.ElapsedMilliseconds / 1000.0;
 		}
 
-		private static void ProcessCaseDocuments(this Case cse, Action<CaseDocument> processor)
+		private static void ProcessCollectionOfType<T>(this Case cse, Action<T> processor)
+			where T : DataContractBase
 		{
-			if (!(cse.CaseDocuments?.Count > 0)) return;
-			foreach (CaseDocument document in cse.CaseDocuments)
+			PropertyInfo property = typeof(Case).GetProperties().SingleOrDefault(p => p.PropertyType.IsAssignableFrom(typeof(List<T>)));
+			List<T> collection = property?.GetValue(cse) as List<T>;
+			if (collection == null) return;
+
+			if (!collection.Any()) return;
+			foreach (T item in collection)
 			{
-				processor(document);
+				processor(item);
 			}
 		}
 	}

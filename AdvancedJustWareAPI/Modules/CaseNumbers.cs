@@ -19,7 +19,7 @@ namespace AdvancedJustWareAPI.Modules
 		[TestInitialize]
 		public void Initialize()
 		{
-			_client = ApiFactory.CreateApiClient();
+			_client = ApiClientFactory.CreateApiClient();
 			_numberType = _client.GetCode<NumberType>("MasterCode = 3");
 			Assert.IsNotNull(_numberType, "Number type with master code 3 not found");
 			_lawInvolveType = _client.GetCode<InvolveType>("MasterCode = 5");
@@ -34,8 +34,7 @@ namespace AdvancedJustWareAPI.Modules
 		[TestCleanup]
 		public void TestCleanup()
 		{
-			IDisposable disposable = _client as IDisposable;
-			disposable?.Dispose();
+			_client.Dispose();
 		}
 
 		[TestMethod]

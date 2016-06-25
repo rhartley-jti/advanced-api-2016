@@ -18,9 +18,15 @@ namespace AdvancedJustWareAPI.Modules
 		[TestInitialize]
 		public void Initialize()
 		{
-			_client = ApiFactory.CreateApiClient();
+			_client = ApiClientFactory.CreateApiClient();
 			_caseID = _client.SubmitCase().ID;
 			_nameID = _client.SubmitName().ID;
+		}
+
+		[TestCleanup]
+		public void TestCleanup()
+		{
+			_client.Dispose();
 		}
 
 		[TestMethod]
@@ -77,7 +83,7 @@ namespace AdvancedJustWareAPI.Modules
 				CaseID = _caseID,
 				NewPipNameID = _nameID
 			};
-			double copyEllapsedSeconds = JustWareApiExtensions.TimeAction(() =>
+			double copyEllapsedSeconds = ApiExtensions.TimeAction(() =>
 			{
 				for (int i = 0; i < 100; i++)
 				{

@@ -17,18 +17,15 @@ namespace AdvancedJustWareAPI.Modules
 		[TestInitialize]
 		public void Initialize()
 		{
-			_dataconversionClient = ApiFactory.CreateDataConversionClient();
-			_apiClient = ApiFactory.CreateApiClient(ensureAutoGenerationEnabled: false);
+			_dataconversionClient = ApiClientFactory.CreateDataConversionClient();
+			_apiClient = ApiClientFactory.CreateApiClient(ensureAutoGenerationEnabled: false);
 		}
 
 		[TestCleanup]
 		public void TestCleanup()
 		{
-			IDisposable disposableDataconverionClient = _dataconversionClient as IDisposable;
-			disposableDataconverionClient?.Dispose();
-
-			IDisposable disposableApiClient = _apiClient as IDisposable;
-			disposableApiClient?.Dispose();
+			_dataconversionClient.Dispose();
+			_apiClient.Dispose();
 		}
 
 		[TestMethod]

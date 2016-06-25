@@ -5,7 +5,7 @@ using AdvancedJustWareAPI.api.extra;
 
 namespace AdvancedJustWareAPI.Extenstions
 {
-	public static class ApiFactory
+	public static class ApiClientFactory
 	{
 		public const string TC_USER = @"tc\user";
 		public const string TC_USER_PASSWORD = "JustWare5";

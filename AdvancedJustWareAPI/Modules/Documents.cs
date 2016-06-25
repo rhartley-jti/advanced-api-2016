@@ -18,7 +18,7 @@ namespace AdvancedJustWareAPI.Modules
 		[TestInitialize]
 		public void Initialize()
 		{
-			_client = ApiFactory.CreateApiClient();
+			_client = ApiClientFactory.CreateApiClient();
 			_existingDocument = new CaseDocument().Initialize(DOWNLOAD_DATA);
 			var tmpCase = new Case()
 				.Initialize()
@@ -30,8 +30,7 @@ namespace AdvancedJustWareAPI.Modules
 		[TestCleanup]
 		public void TestCleanup()
 		{
-			IDisposable disposable = _client as IDisposable;
-			disposable?.Dispose();
+			_client.Dispose();
 		}
 
 		[TestMethod]
@@ -70,8 +69,8 @@ namespace AdvancedJustWareAPI.Modules
 				// 3. Setup Credentials
 				NetworkCredential networkCredential = new NetworkCredential
 				{
-					UserName = ApiFactory.TC_USER,
-					Password = ApiFactory.TC_USER_PASSWORD
+					UserName = ApiClientFactory.TC_USER,
+					Password = ApiClientFactory.TC_USER_PASSWORD
 				};
 				webClient.Credentials = networkCredential;
 
