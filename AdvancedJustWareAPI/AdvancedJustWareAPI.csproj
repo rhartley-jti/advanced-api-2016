@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="api\CaseDocument.cs" />
     <Compile Include="Extenstions\NameAgency.cs" />
+    <Compile Include="Logging.cs" />
     <Compile Include="Modules\CaseNumbers.cs" />
     <Compile Include="Modules\CopyCase.cs" />
     <Compile Include="Modules\DataConversionService.cs" />

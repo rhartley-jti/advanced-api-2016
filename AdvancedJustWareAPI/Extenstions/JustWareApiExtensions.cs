@@ -25,9 +25,10 @@ namespace AdvancedJustWareAPI.Extenstions
 
 		static JustWareApiExtensions()
 		{
+			IJustWareApi client = null;
 			try
 			{
-				IJustWareApi client = ApiFactory.CreateApiClient();
+				client = ApiFactory.CreateApiClient(ensureAutoGenerationEnabled: false);
 				_primaryInvolveType = client.GetCode<InvolveType>("MasterCode = 1");
 				_statusType = client.GetCode<CaseStatusType>("MasterCode = 1");
 				_caseType = client.GetCode<CaseType>();
@@ -41,6 +42,11 @@ namespace AdvancedJustWareAPI.Extenstions
 			{
 				_logger.Error(exception);
 				throw;
+			}
+			finally
+			{
+				IDisposable disposable = client as IDisposable;
+				disposable?.Dispose();
 			}
 		}
 
