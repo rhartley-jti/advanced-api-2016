@@ -20,7 +20,7 @@ namespace AdvancedJustWareAPI.Modules
 		{
 			_client = ApiFactory.CreateApiClient();
 			_caseID = _client.SubmitCase().ID;
-			_nameID = _client.SubmitName();
+			_nameID = _client.SubmitName().ID;
 		}
 
 		[TestMethod]

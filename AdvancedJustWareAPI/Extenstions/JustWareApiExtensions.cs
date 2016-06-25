@@ -19,6 +19,8 @@ namespace AdvancedJustWareAPI.Extenstions
 		private static readonly CaseType _caseType;
 		private static readonly AgencyType _agencyType;
 		private static readonly DocumentType _documentType;
+		private static readonly EventType _eventType;
+		private static readonly AddressType _addressType;
 		private static readonly int _currentUserNameID;
 
 		static JustWareApiExtensions()
@@ -31,6 +33,8 @@ namespace AdvancedJustWareAPI.Extenstions
 				_caseType = client.GetCode<CaseType>();
 				_agencyType = client.GetCode<AgencyType>("IsAccountOwner = true");
 				_documentType = client.GetCode<DocumentType>();
+				_eventType = client.GetCode<EventType>("MasterCode = 1");
+				_addressType = client.GetCode<AddressType>();
 				_currentUserNameID = client.GetCallerNameID();
 			}
 			catch (Exception exception)
@@ -89,23 +93,23 @@ namespace AdvancedJustWareAPI.Extenstions
 			return ellapsedSeconds;
 		}
 
-		public static int SubmitName(this IJustWareApi client, Name name = null)
+		public static Name SubmitName(this IJustWareApi client, Name name = null)
 		{
-			int nameID = 0;
+			Name actualName = name ?? new Name().Initialize();
 			try
 			{
 				double ellapsedSeconds = TimeAction(() =>
 				{
 					List<Key> keys = client.Submit(name ?? new Name().Initialize());
-					nameID = keys.Single().NewID;
+					actualName.ID = keys.Single(k => k.TypeName.Equals(nameof(Name))).NewID;
 				});
-				_logger.Info("Created name('{0}') in {1} seconds", nameID, ellapsedSeconds);
+				_logger.Info("Created name('{0}') in {1} seconds", actualName.ID, ellapsedSeconds);
 			}
 			catch (Exception exception)
 			{
 				_logger.Error(exception);
 			}
-			return nameID;
+			return actualName;
 		}
 
 		public static Case SubmitCase(this IJustWareApi client, Case cse = null)
@@ -329,6 +333,21 @@ namespace AdvancedJustWareAPI.Extenstions
 			return cse;
 		}
 
+		public static Case AddEvent(this Case cse, CaseEvent evnt = null)
+		{
+			if (evnt == null)
+			{
+				evnt = new CaseEvent().Initialize(DateTime.Now);
+			}
+
+			if (cse.Events == null)
+			{
+				cse.Events = new List<CaseEvent>();
+			}
+			cse.Events.Add(evnt);
+			return cse;
+		}
+
 		public static Agency Initialize(this Agency agency, AgencyType agencyType, NumberType numberType, string number = null)
 		{
 			agency.Operation = OperationType.Insert;
@@ -345,9 +364,8 @@ namespace AdvancedJustWareAPI.Extenstions
 			return name;
 		}
 
-		public static Name AddAddress(this Name name, AddressType addressType, string street = "843 S. 100 W", string city = "Logan", string state = "UT", string zip = "84321", string tempID = null)
+		public static Name AddAddress(this Name name, AddressType addressType = null, string street = "843 S. 100 W", string city = "Logan", string state = "UT", string zip = "84321", string tempID = null)
 		{
-			if (addressType == null) throw new ArgumentNullException(nameof(addressType));
 			if (name.Addresses == null)
 			{
 				name.Addresses = new List<Address>();
@@ -355,7 +373,7 @@ namespace AdvancedJustWareAPI.Extenstions
 			name.Addresses.Add(new Address
 			{
 				Operation = OperationType.Insert,
-				TypeCode = addressType.Code,
+				TypeCode = addressType?.Code ?? _addressType.Code,
 				StreetAddress = street,
 				City = city,
 				StateCode = state,
@@ -401,11 +419,23 @@ namespace AdvancedJustWareAPI.Extenstions
 
 		public static CaseDocument Initialize(this CaseDocument document, string documentData, string caseID = null, DocumentType documentType = null, string fileName = null)
 		{
+			document.Operation = OperationType.Insert;
 			document.CaseID = caseID;
 			document.FileName = fileName ?? $"{Guid.NewGuid()}.txt";
 			document.TypeCode = documentType?.Code ?? _documentType.Code;
 			document.DocumentData = documentData;
 			return document;
+		}
+
+		public static CaseEvent Initialize(this CaseEvent evt, DateTime startDate, EventType eventType = null, string caseID = null, DateTime? endDate = null)
+		{
+			evt.Operation = OperationType.Insert;
+			evt.TypeCode = eventType?.Code ?? _eventType.Code;
+			evt.EventDate = startDate;
+			evt.EventEndDate = endDate.HasValue && endDate.Value > startDate ? endDate.Value : startDate.AddMinutes(1);
+			evt.CaseID = caseID;
+
+			return evt;
 		}
 
 		public static double TimeAction(Action action)

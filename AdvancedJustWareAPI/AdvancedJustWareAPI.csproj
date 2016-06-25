@@ -52,6 +52,7 @@
     <Compile Include="Extenstions\JustWareApiExtensions.cs" />
     <Compile Include="Modules\Documents.cs" />
     <Compile Include="Modules\Keys.cs" />
+    <Compile Include="Modules\Queries.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service References\api.extra\Reference.cs">
       <AutoGen>True</AutoGen>
