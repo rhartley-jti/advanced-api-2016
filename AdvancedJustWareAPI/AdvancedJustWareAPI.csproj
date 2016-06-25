@@ -42,13 +42,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="api\CaseDocument.cs" />
     <Compile Include="Extenstions\NameAgency.cs" />
     <Compile Include="Modules\CaseNumbers.cs" />
     <Compile Include="Modules\CopyCase.cs" />
     <Compile Include="Modules\DataConversionService.cs" />
     <Compile Include="Environment.cs" />
     <Compile Include="Extenstions\ApiFactory.cs" />
-    <Compile Include="Extenstions\ApiCreateResult.cs" />
     <Compile Include="Extenstions\JustWareApiExtensions.cs" />
     <Compile Include="Modules\Documents.cs" />
     <Compile Include="Modules\Keys.cs" />

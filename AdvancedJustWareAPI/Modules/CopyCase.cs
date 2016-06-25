@@ -19,8 +19,8 @@ namespace AdvancedJustWareAPI.Modules
 		public void Initialize()
 		{
 			_client = ApiFactory.CreateApiClient();
-			_caseID = _client.CreateCases(1).FirstCaseID;
-			_nameID = _client.CreateName().FirstNameID;
+			_caseID = _client.SubmitCase().ID;
+			_nameID = _client.SubmitName();
 		}
 
 		[TestMethod]
@@ -71,7 +71,7 @@ namespace AdvancedJustWareAPI.Modules
 		[TestMethod]
 		public void CopyCaseHasBetterPerformance()
 		{
-			ApiCreateResult manuallyCreated = _client.CreateCases(100);
+			double manuallyCreatedSeconds = _client.CreateCases(100);
 			var parameters = new CopyCaseParameters
 			{
 				CaseID = _caseID,
@@ -86,7 +86,7 @@ namespace AdvancedJustWareAPI.Modules
 			});
 			_logger.Info("Copying case 100 times took {0} seconds", copyEllapsedSeconds);
 
-			Assert.IsTrue(copyEllapsedSeconds < manuallyCreated.EllapsedSeconds, "Copy case faster");
+			Assert.IsTrue(copyEllapsedSeconds < manuallyCreatedSeconds, "Copy case faster");
 		}
 	}
 }

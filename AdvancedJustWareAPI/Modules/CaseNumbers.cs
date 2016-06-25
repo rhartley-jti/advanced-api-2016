@@ -56,7 +56,7 @@ namespace AdvancedJustWareAPI.Modules
 			
 			_newCase.AddAgency(agency);
 
-			string caseID = _client.SubmitCase(_newCase);
+			string caseID = _client.SubmitCase(_newCase).ID;
 			Case actualCase = _client.GetCase(caseID, new List<string> { "Agencies" });
 			Assert.IsNotNull(actualCase, $"Case({caseID}) not found");
 			Assert.AreEqual(1, actualCase.Agencies.Count, "No agencies");
@@ -72,7 +72,7 @@ namespace AdvancedJustWareAPI.Modules
 				.AddAgency(lawAgency)
 				.AddInvolvement(_lawInvolveType, _officerData.NameID, lawAgency);
 
-			string caseID = _client.SubmitCase(_newCase);
+			string caseID = _client.SubmitCase(_newCase).ID;
 
 			Case actualCase = _client.GetCase(caseID, new List<string> { "CaseInvolvedNames" });
 			Assert.IsNotNull(actualCase, "Case not found");
@@ -94,7 +94,7 @@ namespace AdvancedJustWareAPI.Modules
 				.AddAgency(agency)
 				.AddInvolvement(_lawInvolveType, _officerData.NameID, agency);
 
-			string caseID = _client.SubmitCase(_newCase);
+			string caseID = _client.SubmitCase(_newCase).ID;
 
 			Case actualCase = _client.GetCase(caseID, new List<string> { "CaseInvolvedNames" });
 			Assert.IsNotNull(actualCase, "Case not found");

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using AdvancedJustWareAPI.api;
 using AdvancedJustWareAPI.api.extra;
 using AdvancedJustWareAPI.Extenstions;
@@ -47,12 +46,10 @@ namespace AdvancedJustWareAPI.Modules
 			try
 			{
 				_dataconversionClient.DisableAutoGeneration();
-				ApiCreateResult result = _apiClient.CreateCases(1);
-				Assert.IsNotNull(result, "Case was not created");
-				string newCaseID = result.FirstCaseID;
+				string newCaseID = _apiClient.SubmitCase().ID;
 				Assert.IsNotNull(newCaseID, "No CaseID");
-				_logger.Info("Case created: {0}", newCaseID);
 
+				//API will still find the case (The client has the issue)
 				//var cse = _apiClient.GetCase(newCaseID, null);
 				//Assert.IsNull(cse, $"Found case {newCaseID}");
 
@@ -81,13 +78,13 @@ namespace AdvancedJustWareAPI.Modules
 			{
 				Assert.IsTrue(_dataconversionClient.IsAutoGenerationEnabled(), "AutoGenerationEnabled");
 				_logger.Info("Creating cases with auto generation enabled");
-				ApiCreateResult autoGenerationEnabled = _apiClient.CreateCases(NUMBER_OF_CASES);
+				double autoGenerationEnabledSeconds = _apiClient.CreateCases(NUMBER_OF_CASES);
 				_dataconversionClient.DisableAutoGeneration();
 				Assert.IsFalse(_dataconversionClient.IsAutoGenerationEnabled(), "!AutoGenerationEnabled");
 				_logger.Info("Creating cases with auto generation disabled");
-				ApiCreateResult autoGenerationDisabled = _apiClient.CreateCases(NUMBER_OF_CASES);
+				double autoGenerationDisabledSeconds = _apiClient.CreateCases(NUMBER_OF_CASES);
 
-				Assert.IsTrue(autoGenerationDisabled.EllapsedSeconds < autoGenerationEnabled.EllapsedSeconds, "Disabling auto generation did not speed things up");
+				Assert.IsTrue(autoGenerationDisabledSeconds < autoGenerationEnabledSeconds, "Disabling auto generation did not speed things up");
 			}
 			finally
 			{

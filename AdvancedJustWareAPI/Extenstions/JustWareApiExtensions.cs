@@ -66,19 +66,17 @@ namespace AdvancedJustWareAPI.Extenstions
 			return code;
 		}
 
-		public static ApiCreateResult CreateCases(this IJustWareApi client, int numberOfCases)
+		public static double CreateCases(this IJustWareApi client, int numberOfCases)
 		{
-			var keys = new List<Key>();
 			double ellapsedSeconds;
-			Case cse = new Case();
-			cse.Initialize();
+			Case cse = new Case().Initialize();
 			try
 			{
 				ellapsedSeconds = TimeAction(() =>
 				{
 					for (int i = 0; i < numberOfCases; i++)
 					{
-						keys.AddRange(client.Submit(cse));
+						client.Submit(cse);
 					}
 				});
 				_logger.Info("Created {1} cases in {0} seconds", ellapsedSeconds, numberOfCases);
@@ -88,46 +86,79 @@ namespace AdvancedJustWareAPI.Extenstions
 				_logger.Error(exception);
 				throw;
 			}
-			return new ApiCreateResult(keys.Where(k => k.TypeName.Equals("Case", StringComparison.OrdinalIgnoreCase)), ellapsedSeconds);
+			return ellapsedSeconds;
 		}
 
-		public static ApiCreateResult CreateName(this IJustWareApi client)
+		public static int SubmitName(this IJustWareApi client, Name name = null)
 		{
-			var newName = new Name
-			{
-				Operation = OperationType.Insert,
-				Last = Guid.NewGuid().ToString()
-			};
-			List<Key> keys = null;
-			double ellapsedSeconds = TimeAction(() =>
-			{
-				keys = client.Submit(newName);
-			});
-			_logger.Info("Created name('{0}') in {1} seconds", newName.Last, ellapsedSeconds);
-
-			return new ApiCreateResult(keys, ellapsedSeconds);
-		}
-
-		public static string SubmitCase(this IJustWareApi client, Case cse)
-		{
-			double ellapsedSeconds;
-			string caseID;
+			int nameID = 0;
 			try
 			{
-				List<Key> keys = new List<Key>();
-				ellapsedSeconds = TimeAction(() =>
+				double ellapsedSeconds = TimeAction(() =>
 				{
-					keys.AddRange(client.Submit(cse));
+					List<Key> keys = client.Submit(name ?? new Name().Initialize());
+					nameID = keys.Single().NewID;
 				});
-				caseID = keys.First(k => k.TypeName.Equals("Case", StringComparison.OrdinalIgnoreCase)).NewCaseID;
+				_logger.Info("Created name('{0}') in {1} seconds", nameID, ellapsedSeconds);
+			}
+			catch (Exception exception)
+			{
+				_logger.Error(exception);
+			}
+			return nameID;
+		}
+
+		public static Case SubmitCase(this IJustWareApi client, Case cse = null)
+		{
+			Case actualCase = cse ?? new Case().Initialize();
+			try
+			{
+				actualCase.ProcessCaseDocuments(doc =>
+				{
+					doc.Operation = OperationType.None;
+				});
+				double ellapsedSeconds = TimeAction(() =>
+				{
+					var keys = client.Submit(actualCase);
+					actualCase.ID = keys.First(k => k.TypeName.Equals(nameof(Case))).NewCaseID;
+					actualCase.ProcessCaseDocuments(doc =>
+					{
+						doc.CaseID = actualCase.ID;
+						client.UploadDocument(doc);
+					});
+				});
+
+				_logger.Info("Created case {0} with {1} documents in {2} seconds", 
+					actualCase.ID,
+					actualCase.CaseDocuments?.Count ?? 0,
+					ellapsedSeconds);
 			}
 			catch (Exception exception)
 			{
 				_logger.Error(exception);
 				throw;
 			}
-			_logger.Info("Created case {0} in {1} seconds", caseID, ellapsedSeconds);
-			return caseID;
+			return actualCase;
+		}
+
+		public static CaseDocument UploadDocument(this IJustWareApi client, CaseDocument document)
+		{
+			document.Operation = OperationType.Insert;
+			string uploadUrl = client.RequestFileUpload(document);
+			uploadUrl.UploadToApi(document.DocumentData);
+			List<Key> docKeys = client.FinalizeFileUpload(document, uploadUrl);
+
+			Key docKey = docKeys.FirstOrDefault(k => k.TypeName.Equals(nameof(CaseDocument)));
+			if (docKey == null)
+			{
+				_logger.Warn("Unable to find document key");
+			}
+			else
+			{
+				document.Operation = OperationType.None;
+				document.ID = docKey.NewID;
+			}
+			return document;
 		}
 
 		public static NameAgency GetFirstNameInAgency(this IJustWareApi client, int agencyMasterCode)
@@ -149,10 +180,10 @@ namespace AdvancedJustWareAPI.Extenstions
 				});
 				if (resultNameAgency == null) return null;
 
-				_logger.Info("Found name({0}) in agency({1}) with master code {2} in {3} seconds", 
-					resultNameAgency.NameID, 
+				_logger.Info("Found name({0}) in agency({1}) with master code {2} in {3} seconds",
+					resultNameAgency.NameID,
 					resultNameAgency.AgencyType.Code,
-					agencyMasterCode, 
+					agencyMasterCode,
 					ellapsedSeconds);
 				return resultNameAgency;
 			}
@@ -182,28 +213,6 @@ namespace AdvancedJustWareAPI.Extenstions
 				_logger.Error(exception);
 				throw;
 			}
-		}
-
-		public static ApiCreateResult AddDocumentToCase(this IJustWareApi client, string caseID, string data, string fileName = null)
-		{
-			var document = new CaseDocument
-			{
-				Operation = OperationType.Insert,
-				FileName = fileName ?? Guid.NewGuid().ToString(),
-				CaseID = caseID,
-				TypeCode = _documentType.Code
-			};
-
-			List<Key> keys = new List<Key>();
-			double ellapsedSeconds = TimeAction(() =>
-			{
-				string uploadUrl = client.RequestFileUpload(document);
-				uploadUrl.UploadToApi(data);
-				keys.AddRange(client.FinalizeFileUpload(document, uploadUrl));
-			});
-			_logger.Info("Uploaded document({0}) to case '{1}' in {2} seconds", document.FileName, caseID, ellapsedSeconds);
-
-			return new ApiCreateResult(keys, ellapsedSeconds);
 		}
 
 		public static string DownloadFromApi(this IJustWareApi client, CaseDocument document, string username = ApiFactory.TC_USER, string password = ApiFactory.TC_USER_PASSWORD)
@@ -305,6 +314,21 @@ namespace AdvancedJustWareAPI.Extenstions
 			return cse;
 		}
 
+		public static Case AddDocument(this Case cse, CaseDocument document = null)
+		{
+			if (document == null)
+			{
+				document = new CaseDocument().Initialize("Test document");
+			}
+
+			if (cse.CaseDocuments == null)
+			{
+				cse.CaseDocuments = new List<CaseDocument>();
+			}
+			cse.CaseDocuments.Add(document);
+			return cse;
+		}
+
 		public static Agency Initialize(this Agency agency, AgencyType agencyType, NumberType numberType, string number = null)
 		{
 			agency.Operation = OperationType.Insert;
@@ -375,6 +399,15 @@ namespace AdvancedJustWareAPI.Extenstions
 			return name;
 		}
 
+		public static CaseDocument Initialize(this CaseDocument document, string documentData, string caseID = null, DocumentType documentType = null, string fileName = null)
+		{
+			document.CaseID = caseID;
+			document.FileName = fileName ?? $"{Guid.NewGuid()}.txt";
+			document.TypeCode = documentType?.Code ?? _documentType.Code;
+			document.DocumentData = documentData;
+			return document;
+		}
+
 		public static double TimeAction(Action action)
 		{
 			Stopwatch watch = Stopwatch.StartNew();
@@ -382,6 +415,15 @@ namespace AdvancedJustWareAPI.Extenstions
 			watch.Stop();
 
 			return watch.ElapsedMilliseconds / 1000.0;
+		}
+
+		private static void ProcessCaseDocuments(this Case cse, Action<CaseDocument> processor)
+		{
+			if (!(cse.CaseDocuments?.Count > 0)) return;
+			foreach (CaseDocument document in cse.CaseDocuments)
+			{
+				processor(document);
+			}
 		}
 	}
 }

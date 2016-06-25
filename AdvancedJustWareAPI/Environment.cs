@@ -67,18 +67,16 @@ namespace AdvancedJustWareAPI
 		[TestMethod]
 		public void CreateNewCaseWithDocument()
 		{
-			ApiCreateResult result = _apiClient.CreateCases(numberOfCases: 1);
-			Assert.IsNotNull(result, "No results");
-			List<Key> keys = result.Keys.ToList();
-			Assert.AreEqual(1, keys.Count, "No keys");
-			Assert.AreEqual("Case", keys[0].TypeName, "Key TypeName");
-			string caseID = keys[0].NewCaseID;
-			Assert.IsNotNull(caseID, "Key NewCaseID");
 			const string TEST_DOCUMENT = "Test Document";
-			ApiCreateResult documentResult = _apiClient.AddDocumentToCase(caseID, TEST_DOCUMENT);
-			int? documentID = documentResult.GetFirstEntityID<CaseDocument>();
-			Assert.IsTrue(documentID.HasValue, "No document");
-			string actualDocumentContents = _apiClient.DownloadFromApi(new CaseDocument { ID = documentID.Value });
+			CaseDocument document = new CaseDocument().Initialize(TEST_DOCUMENT);
+			Case cse = new Case()
+				.Initialize()
+				.AddDocument(document);
+			Case actualCase = _apiClient.SubmitCase(cse);
+			Assert.IsNotNull(actualCase.ID, "No Case");
+
+			string actualDocumentContents = _apiClient.DownloadFromApi(document);
+
 			Assert.AreEqual(TEST_DOCUMENT, actualDocumentContents, "Document contents");
 		}
 

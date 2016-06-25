@@ -12,21 +12,19 @@ namespace AdvancedJustWareAPI.Modules
 	{
 		private const string DOWNLOAD_DATA = "Download Test";
 		private IJustWareApi _client;
-		private string _caseID;
+		private Case _case;
 		private CaseDocument _existingDocument;
 
 		[TestInitialize]
 		public void Initialize()
 		{
 			_client = ApiFactory.CreateApiClient();
-			ApiCreateResult caseCreationResult = _client.CreateCases(1);
-			_caseID = caseCreationResult.FirstCaseID;
-			Assert.IsNotNull(_caseID, "Test case was not created");
-
-			ApiCreateResult documentResult = _client.AddDocumentToCase(_caseID, DOWNLOAD_DATA, "download.txt");
-			int? documentID = documentResult.GetFirstEntityID<CaseDocument>();
-			Assert.IsTrue(documentID.HasValue, "No document");
-			_existingDocument = _client.GetCaseDocument(documentID.Value, null);
+			_existingDocument = new CaseDocument().Initialize(DOWNLOAD_DATA);
+			var tmpCase = new Case()
+				.Initialize()
+				.AddDocument(_existingDocument);
+			_case = _client.SubmitCase(tmpCase);
+			Assert.IsNotNull(_case, "Case was not created");
 		}
 
 		[TestCleanup]
@@ -45,7 +43,7 @@ namespace AdvancedJustWareAPI.Modules
 			{
 				Operation = OperationType.Insert,
 				FileName = "uploaded.txt",
-				CaseID = _caseID,
+				CaseID = _case.ID,
 				TypeCode = documentType.Code,
 				Notes = "Came from API"
 			};
@@ -55,7 +53,7 @@ namespace AdvancedJustWareAPI.Modules
 
 			_client.FinalizeFileUpload(document, uploadUrl);
 
-			string query = $"CaseID = \"{_caseID}\" && FileName = \"uploaded.txt\"";
+			string query = $"CaseID = \"{_case.ID}\" && FileName = \"uploaded.txt\"";
 			List<CaseDocument> documents = _client.FindCaseDocuments(query, null);
 			Assert.AreEqual(1, documents.Count, "Expected documents");
 		}
