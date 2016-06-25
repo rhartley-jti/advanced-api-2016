@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using AdvancedJustWareAPI.api;
 using AdvancedJustWareAPI.api.extra;
 
@@ -15,16 +16,31 @@ namespace AdvancedJustWareAPI.Extenstions
 
 		private static void ConfigureSecurity()
 		{
+			if (_securitySetup) return;
 			ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true;
 			_securitySetup = true;
 		}
 
-		public static IJustWareApi CreateApiClient(string username = TC_USER, string password = TC_USER_PASSWORD)
+		public static IJustWareApi CreateApiClient(string username = TC_USER, string password = TC_USER_PASSWORD, bool ensureAutoGenerationEnabled = true)
 		{
 			ConfigureSecurity();
 			var client = new JustWareApiClient();
 			client.ClientCredentials.UserName.UserName = username;
 			client.ClientCredentials.UserName.Password = password;
+
+			if (!ensureAutoGenerationEnabled) return client;
+
+			IDataConversionService dsClient = null;
+			try
+			{
+				dsClient = CreateDataConversionClient();
+				dsClient.EnableAutoGeneration();
+			}
+			finally
+			{
+				IDisposable disposable = dsClient as IDisposable;
+				disposable?.Dispose();
+			}
 
 			return client;
 		}

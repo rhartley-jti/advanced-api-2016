@@ -18,7 +18,7 @@ namespace AdvancedJustWareAPI.Modules
 		public void Initialize()
 		{
 			_dataconversionClient = ApiFactory.CreateDataConversionClient();
-			_apiClient = ApiFactory.CreateApiClient();
+			_apiClient = ApiFactory.CreateApiClient(ensureAutoGenerationEnabled: false);
 		}
 
 		[TestCleanup]
