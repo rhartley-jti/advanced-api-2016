@@ -21,12 +21,12 @@ namespace AdvancedJustWareAPI.Extenstions
 			_securitySetup = true;
 		}
 
-		public static IJustWareApi CreateApiClient(string username = TC_USER, string password = TC_USER_PASSWORD, bool ensureAutoGenerationEnabled = true)
+		public static IJustWareApi CreateApiClient(bool admin = false, bool ensureAutoGenerationEnabled = true)
 		{
 			ConfigureSecurity();
 			var client = new JustWareApiClient();
-			client.ClientCredentials.UserName.UserName = username;
-			client.ClientCredentials.UserName.Password = password;
+			client.ClientCredentials.UserName.UserName = admin ? TC_ADMIN : TC_USER;
+			client.ClientCredentials.UserName.Password = admin ? TC_ADMIN_PASSWORD : TC_USER_PASSWORD;
 
 			if (!ensureAutoGenerationEnabled) return client;
 
@@ -34,7 +34,10 @@ namespace AdvancedJustWareAPI.Extenstions
 			try
 			{
 				dsClient = CreateDataConversionClient();
-				dsClient.EnableAutoGeneration();
+				if (!dsClient.IsAutoGenerationEnabled())
+				{
+					dsClient.TriggerAutoGeneration();
+				}
 			}
 			finally
 			{

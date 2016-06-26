@@ -74,7 +74,9 @@ namespace AdvancedJustWareAPI.Extenstions
 		public static T GetCode<T>(this IJustWareApi client, string query = "1=1")
 			where T : DataContractBase
 		{
-			string methodName = $"Find{typeof(T).Name}s";
+			string typeName = typeof(T).Name;
+			string suffix = typeName.EndsWith("s", StringComparison.OrdinalIgnoreCase) ? "es" : "s";
+			string methodName = $"Find{typeName}{suffix}";
 			string fullQuery = $"({query}).Take(1)";
 			MethodInfo methodInfo = client.GetType().GetMethods().FirstOrDefault(m => m.Name.Equals(methodName, StringComparison.OrdinalIgnoreCase));
 			if (methodInfo == null)
@@ -528,8 +530,7 @@ namespace AdvancedJustWareAPI.Extenstions
 			try
 			{
 				//Statutes require Admin level to insert, modify, or delete
-				adminClient = ApiClientFactory
-					.CreateApiClient(username: ApiClientFactory.TC_ADMIN, password: ApiClientFactory.TC_ADMIN_PASSWORD);
+				adminClient = ApiClientFactory.CreateApiClient(admin: true);
 				statute = new Statute().Initialize();
 				List<Key> keys = adminClient.Submit(statute);
 				statute.ID = keys.Single(k => k.TypeName.Equals(nameof(Statute))).NewID;
@@ -540,6 +541,37 @@ namespace AdvancedJustWareAPI.Extenstions
 			{
 				adminClient.Dispose();
 			}
+		}
+
+		public static Account GetLiabilityAccount(this IJustWareApi client, AgencyType agency, int nameID)
+		{
+			Account account = client.GetCode<Account>($"AgencyCode = \"{agency.Code}\" && TypeCode = \"LBLTY\"");
+			if (account != null) return account;
+			IJustWareApi adminClient = null;
+			try
+			{
+				adminClient = ApiClientFactory.CreateApiClient(admin: true);
+				AccountType liabilityType = client.GetCode<AccountType>("MasterCode = 2");
+				AccountStatus openStatus = client.GetCode<AccountStatus>("MasterCode = 1");
+				var liabilityAccount = new Account
+				{
+					Operation = OperationType.Insert,
+					TypeCode = liabilityType.Code,
+					StatusCode = openStatus.Code,
+					AgencyCode = _agencyType.Code,
+					OwnerAgencyCode = _agencyType.Code,
+					Name = $"{liabilityType.Code}-{_agencyType.Description}",
+					Number = "DL-2",
+					NameID = nameID
+				};
+				var keys = adminClient.Submit(liabilityAccount);
+				account = client.GetAccount(keys.Single(k => k.TypeName.Equals(nameof(Account))).NewID, null);
+			}
+			finally
+			{
+				adminClient?.Dispose();
+			}
+			return account;
 		}
 
 		public static double TimeAction(Action action)

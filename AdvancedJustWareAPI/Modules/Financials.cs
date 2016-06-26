@@ -42,7 +42,7 @@ namespace AdvancedJustWareAPI.Modules
 			}
 			finally
 			{
-				client.Dispose();
+				client?.Dispose();
 			}
 		}
 
@@ -72,7 +72,7 @@ namespace AdvancedJustWareAPI.Modules
 				Amount = 50.00m,
 				ReceivedBy = _agencyNameID, //must be member of agency
 				ReceivedDate = DateTime.Now.AddMonths(1),
-				ReferenceNumber = "API-1"  //data of your choice
+				ReferenceNumber = "API-1"  //optional data of your choice
 			};
 
 			List<Key> keys = _client.Submit(payment);
@@ -98,7 +98,10 @@ namespace AdvancedJustWareAPI.Modules
 
 			//Need ChargeInvolvedNames
 			Assert.AreEqual(1, charge.ChargeInvolvedNames.Count, "ChargeInvolvedNames");
-			
+
+			//Need agency liability account
+			Account agencyLiabilityAccount = _client.GetLiabilityAccount(_agencyType, _agencyNameID);
+
 			var obligation = new Obligation
 			{
 				Operation = OperationType.Insert,
@@ -106,12 +109,15 @@ namespace AdvancedJustWareAPI.Modules
 				CaseID = cse.ID,
 				DateDue = DateTime.Now.AddDays(15),
 				Amount = 100.00m,
-				Payee = ApiExtensions.CallerNameID
+				Payee = _agencyNameID,
+				//Documentation does not have these as required
+				ChargeInvolvedNameID = charge.ChargeInvolvedNames.First().ID,
+				ToAccountID = agencyLiabilityAccount.ID,
+				AgencyCode = _agencyType.Code
 			};
 			var keys = _client.Submit(obligation);
 
 			Assert.AreEqual(1, keys.Count(k => k.TypeName.Equals(nameof(Obligation))), "Obligation key count");
-			
 		}
 	}
 }
