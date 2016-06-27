@@ -61,63 +61,31 @@ namespace AdvancedJustWareAPI.Modules
 		[TestMethod]
 		public void Payment()
 		{
-			Name name = _client.SubmitName();
-			Payment payment = new Payment
-			{
-				Operation = OperationType.Insert,
-				TypeCode = _paymentType.Code,
-				AgencyCode = _agencyType.Code,
-				NameID = name.ID,
-				Payer = name.ID,
-				Amount = 50.00m,
-				ReceivedBy = _agencyNameID, //must be member of agency
-				ReceivedDate = DateTime.Now.AddMonths(1),
-				ReferenceNumber = "API-1"  //optional data of your choice
-			};
-
-			List<Key> keys = _client.Submit(payment);
-
-			Assert.AreEqual(1, keys.Count(k => k.TypeName.Equals(nameof(Payment))), "Payment key");
-			Name actualName = _client.GetName(name.ID, new List<string> { "Payments" });
-			Assert.AreEqual(1, actualName.Payments.Count, "Payments associated with name");
-			Payment actualPayment = actualName.Payments[0];
-			Assert.AreEqual(payment.Amount, actualPayment.Amount, "Amount");
-			Assert.AreEqual(payment.ReferenceNumber, actualPayment.ReferenceNumber, "ReferenceNumber");
-			Assert.IsNotNull(actualPayment.ReceiptNumber, "ReceiptNumber");
-			_logger.Info("Payment reciept number: {0}", actualPayment.ReceiptNumber);
+			// Need a name (f1)
+			
+			// Payment entity (f2)
+			
+			// Submit (f3)
+			
+			// Check the payment (f4)
+			
+			// Reciept # can be used with report (f5)
+			
 		}
 
 		[TestMethod]
 		public void Obligation()
 		{
-			Name primaryName = _client.SubmitName(new Name().Initialize());
-			Charge charge = new Charge().Initialize(number: 1);
-			Case cse = _client.SubmitCase(new Case()
-				.Initialize(primaryName)
-				.AddCharge(charge));
-
-			//Need ChargeInvolvedNames
-			Assert.AreEqual(1, charge.ChargeInvolvedNames.Count, "ChargeInvolvedNames");
-
-			//Need agency liability account
-			Account agencyLiabilityAccount = _client.GetLiabilityAccount(_agencyType, _agencyNameID);
-
-			var obligation = new Obligation
-			{
-				Operation = OperationType.Insert,
-				TypeCode = _obligationType.Code,
-				CaseID = cse.ID,
-				DateDue = DateTime.Now.AddDays(15),
-				Amount = 100.00m,
-				Payee = _agencyNameID,
-				//Documentation does not have these as required
-				ChargeInvolvedNameID = charge.ChargeInvolvedNames.First().ID,
-				ToAccountID = agencyLiabilityAccount.ID,
-				AgencyCode = _agencyType.Code
-			};
-			var keys = _client.Submit(obligation);
-
-			Assert.AreEqual(1, keys.Count(k => k.TypeName.Equals(nameof(Obligation))), "Obligation key count");
+			// Need a case with a charge (f6)
+			
+			// Obligation requries the charge involved record ID, will need to load (f7)
+			
+			// Need agency liability account for ToAccountID (may have to create) (f8)
+			
+			// Ready to create obligation and submit (f9)
+			
+			// Make sure we got a key for the obligation (f11)
+			
 		}
 	}
 }

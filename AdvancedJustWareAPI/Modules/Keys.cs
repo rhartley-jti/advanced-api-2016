@@ -27,66 +27,37 @@ namespace AdvancedJustWareAPI.Modules
 		[TestMethod]
 		public void AllEntitiesButCaseUseNewID()
 		{
-			var name = new Name().Initialize();
-
-			List<Key> keys =_client.Submit(name);
-
-			Assert.AreEqual(1, keys.Count, "Number of keys returned");
-			Assert.AreEqual(nameof(Name), keys[0].TypeName, "Type name");
-			Assert.IsTrue(keys[0].NewID > 0, "NewID > 0");
-			Assert.IsNull(keys[0].NewCaseID, "NewCaseID");
+			// Create name (k1)
+			
+			// Explore keys collection (k2)
+			
 		}
 
 		[TestMethod]
 		public void AllEntitesCreatedDuringSubmitWillHaveAKeyReturned()
 		{
-			var name = new Name()
-				.Initialize()
-				.AddAddress()
-				.AddEmail()
-				.AddEmail("api@journaltech.com")
-				.AddPhone();
-
-			List<Key> keys = _client.Submit(name);
-
-			Assert.AreEqual(5, keys.Count, "Number of keys");
-			Assert.AreEqual(1, keys.Count(k => k.TypeName.Equals(nameof(Name))), "Number of name keys");
-			Assert.AreEqual(1, keys.Count(k => k.TypeName.Equals(nameof(Phone))), "Number of phone keys");
-			Assert.AreEqual(2, keys.Count(k => k.TypeName.Equals(nameof(Email))), "Number of email keys");
-			Assert.AreEqual(1, keys.Count(k => k.TypeName.Equals(nameof(Address))), "Number of address keys");
+			// Create a name with metadata (k3)
+			
+			// Explore the keys collection (k4)
+			
 		}
 
 		[TestMethod]
 		public void CaseEntitiesUseNewCaseID()
 		{
-			var cse = new Case().Initialize();
-
-			List<Key> keys = _client.Submit(cse);
-
-			Assert.AreEqual(2, keys.Count, "Number of keys returned");
-			Key caseKey = keys.FirstOrDefault(k => k.TypeName.Equals(nameof(Case)));
-			Assert.IsNotNull(caseKey, "No case key");
-			Assert.AreEqual(default(int), caseKey.NewID, "NewID");
-			Assert.IsNotNull(caseKey.NewCaseID, "NewCaseID");
+			// Create a case (k5)
+			
+			// Explore the keys collection (k6)
+			
 		}
 
 		[TestMethod]
 		public void TempIDIsForYou()
 		{
-			const string MY_TEMP_ID = "TMP-1";
-			var name = new Name()
-				.Initialize()
-				.AddEmail()
-				.AddEmail("api@journaltech.com", tempID: MY_TEMP_ID)
-				.AddEmail()
-				.AddPhone()
-				.AddPhone("877-587-8927", tempID: MY_TEMP_ID)
-				.AddPhone();
-
-			List<Key> keys = _client.Submit(name);
-
-			Assert.AreEqual(7, keys.Count, "Total number of keys returned");
-			Assert.AreEqual(2, keys.Count(k => k.TempID != null && k.TempID.Equals(MY_TEMP_ID)), "Number of keys with my temp id");
+			// Create name with metadata and tempid (k7)
+			
+			// Explore the keys collection (k8)
+			
 		}
 	}
 }
