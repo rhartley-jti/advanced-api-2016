@@ -31,10 +31,9 @@ namespace AdvancedJustWareAPI.Modules
 		[TestMethod]
 		public void DisableAndEnable()
 		{
-			_dataconversionClient.DisableAutoGeneration();
-			Assert.IsFalse(_dataconversionClient.IsAutoGenerationEnabled(), "Autogeneration should be disabled");
-			_dataconversionClient.EnableAutoGeneration();
-			Assert.IsTrue(_dataconversionClient.IsAutoGenerationEnabled(), "Autogeneration should be enabled");
+			//Disable (dcs1)
+			
+			//Enable (dcs2)
 		}
 
 		[TestMethod]
@@ -42,28 +41,23 @@ namespace AdvancedJustWareAPI.Modules
 		{
 			try
 			{
-				_dataconversionClient.DisableAutoGeneration();
-				string newCaseID = _apiClient.SubmitCase().ID;
-				Assert.IsNotNull(newCaseID, "No CaseID");
-
-				//API will still find the case (The client has the issue)
-				//var cse = _apiClient.GetCase(newCaseID, null);
-				//Assert.IsNull(cse, $"Found case {newCaseID}");
-
-				//var findResults = _apiClient.FindCases($"ID = \"{newCaseID}\"", null);
-				//Assert.AreEqual(0, findResults.Count, $"Found case {newCaseID}");
+				//Submit case that the client will not find (dcs3)
+				
+				//API will still find the case (The client has the issue) (dcs4)
+				
 			}
 			finally
 			{
-				_dataconversionClient.EnableAutoGeneration();
+				//Remember to enable in a finally (dcs5)
+				
 			}
 		}
 
 		[TestMethod]
 		public void TriggerAutoGeneration()
 		{
-			_dataconversionClient.TriggerAutoGeneration();
-			Assert.IsTrue(_dataconversionClient.IsAutoGenerationEnabled(), "AutoGeneration not enabled");
+			//Triggering auto generation also enables (now the client will find the case from previous test) (dcs6)
+			
 		}
 
 		[TestMethod]
@@ -73,22 +67,17 @@ namespace AdvancedJustWareAPI.Modules
 
 			try
 			{
-				Assert.IsTrue(_dataconversionClient.IsAutoGenerationEnabled(), "AutoGenerationEnabled");
-				_logger.Info("Creating cases with auto generation enabled");
-				double autoGenerationEnabledSeconds = _apiClient.CreateCases(NUMBER_OF_CASES);
-				_dataconversionClient.DisableAutoGeneration();
-				Assert.IsFalse(_dataconversionClient.IsAutoGenerationEnabled(), "!AutoGenerationEnabled");
-				_logger.Info("Creating cases with auto generation disabled");
-				double autoGenerationDisabledSeconds = _apiClient.CreateCases(NUMBER_OF_CASES);
-
-				Assert.IsTrue(autoGenerationDisabledSeconds < autoGenerationEnabledSeconds, "Disabling auto generation did not speed things up");
+				// Time case creation with auto generation enabled (dcs7)
+				
+				// Time case creation with auto generation disabled (dcs8)
+				
+				// Measure the difference (dcs9)
+				
 			}
 			finally
 			{
-				if (!_dataconversionClient.IsAutoGenerationEnabled())
-				{
-					_dataconversionClient.TriggerAutoGeneration();
-				}
+				// Remember to trigger in finally (dcs10)
+				
 			}
 		}
 	}
