@@ -14,7 +14,7 @@ namespace AdvancedJustWareAPI.Modules
 		private Case _newCase;
 		private InvolveType _lawInvolveType;
 		private ApplicationPerson _officer;
-		private AgencyType _officerAgencyType;
+		private AgencyType _lawAgencyType;
 
 		[TestInitialize]
 		public void Initialize()
@@ -30,8 +30,8 @@ namespace AdvancedJustWareAPI.Modules
 			_officer = _client.GetFirstNameInAgency(agencyMasterCode: 3);
 			Assert.IsNotNull(_officer, "Could not find name in agency");
 
-			_officerAgencyType = _client.GetCode<AgencyType>($"Code = \"{_officer.AgencyCode}\"");
-			Assert.IsNotNull(_officerAgencyType, $"Agency '{_officer.AgencyCode}' type was not found");
+			_lawAgencyType = _client.GetCode<AgencyType>($"Code = \"{_officer.AgencyCode}\"");
+			Assert.IsNotNull(_lawAgencyType, $"Agency '{_officer.AgencyCode}' type was not found");
 			
 		}
 
@@ -44,68 +44,31 @@ namespace AdvancedJustWareAPI.Modules
 		[TestMethod]
 		public void AddNumberToCase()
 		{
-			AgencyType agencyType = _client.GetCode<AgencyType>("MasterCode = 3");
-			Assert.IsNotNull(agencyType, "Agency type not found");
-
-			Agency agency = new Agency
-			{
-				Operation = OperationType.Insert,
-				AgencyCode = agencyType.Code,
-				NumberTypeCode = _numberType.Code,
-				Number = "L16-123",
-				Lead = true,
-				Active = true
-			};
+			//Create agency entity (cn1)
 			
-			_newCase.AddAgency(agency);
-
-			string caseID = _client.SubmitCase(_newCase).ID;
-			Case actualCase = _client.GetCase(caseID, new List<string> { "Agencies" });
-			Assert.IsNotNull(actualCase, $"Case({caseID}) not found");
-			Assert.AreEqual(1, actualCase.Agencies.Count, "No agencies");
-			Assert.AreEqual(agency.Number, actualCase.Agencies[0].Number, "Number");
+			//Add agency to case and submit.  Using extension to simplify (cn2)
+			
+			//Load case and make sure entity was added (cn3)			
 		}
 
 		[TestMethod]
 		public void AgencyAlsoUsedOnCaseInvolvement()
 		{
-			Agency lawAgency = new Agency().Initialize(_officerAgencyType, _numberType);
+			//Create agency and officer involvement (cn4)
 
-			_newCase
-				.AddAgency(lawAgency)
-				.AddInvolvement(_lawInvolveType, _officer.NameID, lawAgency);
+			//Add agency and involvment to case and submit (cn5)
 
-			string caseID = _client.SubmitCase(_newCase).ID;
-
-			Case actualCase = _client.GetCase(caseID, new List<string> { "CaseInvolvedNames" });
-			Assert.IsNotNull(actualCase, "Case not found");
-			Assert.AreEqual(2, actualCase.CaseInvolvedNames.Count, "Case involvements");
-			CaseInvolvedName officerInvolvement = actualCase.CaseInvolvedNames.FirstOrDefault(i => i.NameID == _officer.NameID);
-			Assert.IsNotNull(officerInvolvement, "Could not find officer involvement");
-			Assert.AreEqual(_officerAgencyType.Code, officerInvolvement.AgencyCode, "Officer involvement agency code");
-			Assert.AreEqual(_officerAgencyType.MasterCode, officerInvolvement.InvolvementCodeType, "Agency type lines up with invovlement type");
+			//Get the case and check for expected result (cn6)
 		}
 
 		[TestMethod]
 		public void AssigningAgencyToInvolvmentThatDoesNotMatch()
 		{
-			AgencyType callerAgencyType = _client.GetCallerAgencyType();
-
-			Agency agency = new Agency().Initialize(callerAgencyType, _numberType);
-
-			_newCase
-				.AddAgency(agency)
-				.AddInvolvement(_lawInvolveType, _officer.NameID, agency);
-
-			string caseID = _client.SubmitCase(_newCase).ID;
-
-			Case actualCase = _client.GetCase(caseID, new List<string> { "CaseInvolvedNames" });
-			Assert.IsNotNull(actualCase, "Case not found");
-			Assert.AreEqual(2, actualCase.CaseInvolvedNames.Count, "Case involvements");
-			CaseInvolvedName officerInvolvement = actualCase.CaseInvolvedNames.FirstOrDefault(i => i.NameID == _officer.NameID);
-			Assert.IsNotNull(officerInvolvement, "Could not find officer involvement");
-			Assert.AreEqual(callerAgencyType.Code, officerInvolvement.AgencyCode, "Officer involvement agency code");
-			Assert.AreNotEqual(callerAgencyType.MasterCode, officerInvolvement.InvolvementCodeType, "Expected agency and involvment codes to be different");
+			//Create agency(not law) and officer involvement (cn7)
+			
+			//Add agency and involvement to case and submit (cn8)
+			
+			//Get the case and check for expected result (cn9)
 		}
 	}
 }

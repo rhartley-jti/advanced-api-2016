@@ -339,21 +339,13 @@ namespace AdvancedJustWareAPI.Extenstions
 			return cse;
 		}
 
-		public static Case AddInvolvement(this Case cse, InvolveType involveType, int nameID, Agency agency = null)
+		public static Case AddInvolvement(this Case cse, CaseInvolvedName caseInvolvedName)
 		{
-			if (involveType == null) throw new ArgumentNullException(nameof(involveType));
-			if (nameID == default(int)) throw new ArgumentOutOfRangeException(nameof(nameID), "Missing valid NameID");
 			if (cse.CaseInvolvedNames == null)
 			{
 				cse.CaseInvolvedNames = new List<CaseInvolvedName>();
 			}
-			cse.CaseInvolvedNames.Add(new CaseInvolvedName
-			{
-				Operation = OperationType.Insert,
-				InvolvementCode = involveType.Code,
-				NameID = nameID,
-				CaseAgency = agency
-			});
+			cse.CaseInvolvedNames.Add(caseInvolvedName);
 			return cse;
 		}
 
