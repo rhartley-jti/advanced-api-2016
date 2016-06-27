@@ -212,31 +212,29 @@ namespace AdvancedJustWareAPI.Extenstions
 			return document;
 		}
 
-		public static NameAgency GetFirstNameInAgency(this IJustWareApi client, int agencyMasterCode)
+		public static ApplicationPerson GetFirstNameInAgency(this IJustWareApi client, int agencyMasterCode)
 		{
 			try
 			{
-				NameAgency resultNameAgency = null;
+				ApplicationPerson appPerson = null;
 
 				double ellapsedSeconds = TimeAction(() =>
 				{
 					var masterCodeAgencies = client.FindAgencyTypes($"MasterCode = {agencyMasterCode}", null);
 					foreach (AgencyType agency in masterCodeAgencies)
 					{
-						ApplicationPerson appPerson = client.FindApplicationPersons($"AgencyCode = \"{agency.Code}\"", null).FirstOrDefault();
-						if (appPerson == null) continue;
-						resultNameAgency = new NameAgency(appPerson.NameID, agency);
-						break;
+						appPerson = client.FindApplicationPersons($"AgencyCode = \"{agency.Code}\"", null).FirstOrDefault();
+						if (appPerson != null) break;
 					}
 				});
-				if (resultNameAgency == null) return null;
+				if (appPerson == null) return null;
 
 				_logger.Info("Found name({0}) in agency({1}) with master code {2} in {3} seconds",
-					resultNameAgency.NameID,
-					resultNameAgency.AgencyType.Code,
+					appPerson.NameID,
+					appPerson.AgencyCode,
 					agencyMasterCode,
 					ellapsedSeconds);
-				return resultNameAgency;
+				return appPerson;
 			}
 			catch (Exception exception)
 			{

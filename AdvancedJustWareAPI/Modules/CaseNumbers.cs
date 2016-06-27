@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using AdvancedJustWareAPI.api;
 using AdvancedJustWareAPI.Extenstions;
@@ -14,7 +13,8 @@ namespace AdvancedJustWareAPI.Modules
 		private NumberType _numberType;
 		private Case _newCase;
 		private InvolveType _lawInvolveType;
-		private NameAgency _officerData;
+		private ApplicationPerson _officer;
+		private AgencyType _officerAgencyType;
 
 		[TestInitialize]
 		public void Initialize()
@@ -27,8 +27,12 @@ namespace AdvancedJustWareAPI.Modules
 			
 			_newCase = new Case().Initialize();
 
-			_officerData = _client.GetFirstNameInAgency(agencyMasterCode: 3);
-			Assert.IsNotNull(_officerData, "Could not find name in agency");
+			_officer = _client.GetFirstNameInAgency(agencyMasterCode: 3);
+			Assert.IsNotNull(_officer, "Could not find name in agency");
+
+			_officerAgencyType = _client.GetCode<AgencyType>($"Code = \"{_officer.AgencyCode}\"");
+			Assert.IsNotNull(_officerAgencyType, $"Agency '{_officer.AgencyCode}' type was not found");
+			
 		}
 
 		[TestCleanup]
@@ -65,21 +69,21 @@ namespace AdvancedJustWareAPI.Modules
 		[TestMethod]
 		public void AgencyAlsoUsedOnCaseInvolvement()
 		{
-			Agency lawAgency = new Agency().Initialize(_officerData.AgencyType, _numberType);
+			Agency lawAgency = new Agency().Initialize(_officerAgencyType, _numberType);
 
 			_newCase
 				.AddAgency(lawAgency)
-				.AddInvolvement(_lawInvolveType, _officerData.NameID, lawAgency);
+				.AddInvolvement(_lawInvolveType, _officer.NameID, lawAgency);
 
 			string caseID = _client.SubmitCase(_newCase).ID;
 
 			Case actualCase = _client.GetCase(caseID, new List<string> { "CaseInvolvedNames" });
 			Assert.IsNotNull(actualCase, "Case not found");
 			Assert.AreEqual(2, actualCase.CaseInvolvedNames.Count, "Case involvements");
-			CaseInvolvedName officerInvolvement = actualCase.CaseInvolvedNames.FirstOrDefault(i => i.NameID == _officerData.NameID);
+			CaseInvolvedName officerInvolvement = actualCase.CaseInvolvedNames.FirstOrDefault(i => i.NameID == _officer.NameID);
 			Assert.IsNotNull(officerInvolvement, "Could not find officer involvement");
-			Assert.AreEqual(_officerData.AgencyType.Code, officerInvolvement.AgencyCode, "Officer involvement agency code");
-			Assert.AreEqual(_officerData.AgencyType.MasterCode, officerInvolvement.InvolvementCodeType, "Agency type lines up with invovlement type");
+			Assert.AreEqual(_officerAgencyType.Code, officerInvolvement.AgencyCode, "Officer involvement agency code");
+			Assert.AreEqual(_officerAgencyType.MasterCode, officerInvolvement.InvolvementCodeType, "Agency type lines up with invovlement type");
 		}
 
 		[TestMethod]
@@ -91,14 +95,14 @@ namespace AdvancedJustWareAPI.Modules
 
 			_newCase
 				.AddAgency(agency)
-				.AddInvolvement(_lawInvolveType, _officerData.NameID, agency);
+				.AddInvolvement(_lawInvolveType, _officer.NameID, agency);
 
 			string caseID = _client.SubmitCase(_newCase).ID;
 
 			Case actualCase = _client.GetCase(caseID, new List<string> { "CaseInvolvedNames" });
 			Assert.IsNotNull(actualCase, "Case not found");
 			Assert.AreEqual(2, actualCase.CaseInvolvedNames.Count, "Case involvements");
-			CaseInvolvedName officerInvolvement = actualCase.CaseInvolvedNames.FirstOrDefault(i => i.NameID == _officerData.NameID);
+			CaseInvolvedName officerInvolvement = actualCase.CaseInvolvedNames.FirstOrDefault(i => i.NameID == _officer.NameID);
 			Assert.IsNotNull(officerInvolvement, "Could not find officer involvement");
 			Assert.AreEqual(callerAgencyType.Code, officerInvolvement.AgencyCode, "Officer involvement agency code");
 			Assert.AreNotEqual(callerAgencyType.MasterCode, officerInvolvement.InvolvementCodeType, "Expected agency and involvment codes to be different");
