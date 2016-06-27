@@ -32,67 +32,29 @@ namespace AdvancedJustWareAPI.Modules
 		[TestMethod]
 		public void MinimumCopy()
 		{
-			var parameters = new CopyCaseParameters
-			{
-				CaseID = _caseID,
-				NewPipNameID = _nameID
-			};
+			//Setup parameters and copy case (cc1)
 
-			string resultCaseID = _client.CopyCase(parameters);
-
-			Assert.AreNotEqual(_caseID, resultCaseID, "Different cases");
-			Case copiedCase = _client.GetCase(resultCaseID, new List<string> { "CaseInvolvedNames" });
-			Assert.IsNotNull(copiedCase, "Could not find case");
-			Assert.AreEqual(1, copiedCase.CaseInvolvedNames.Count, "Number of involvements");
-			Assert.AreEqual(_nameID, copiedCase.CaseInvolvedNames[0].NameID, "Involvment NameID");
+			//Check results (cc2)
 		}
 
 		[TestMethod]
 		public void CopyAndRelate()
 		{
-			InvolveType codefendantInvolveType = _client.GetCode<InvolveType>("MasterCode = 4");
-			Assert.IsNotNull(codefendantInvolveType, "Co-Defendant involve type");
-			RelatedCaseType relationshipType = _client.GetCode<RelatedCaseType>();
-			Assert.IsNotNull(relationshipType, "Case relationship type");
+			//Find codes needed to relate (cc3)
 
-			var parameters = new CopyCaseParameters
-			{
-				CaseID = _caseID,
-				NewPipNameID = _nameID,
-				PipInvolveTypeCode = codefendantInvolveType.Code,
-				CaseRelationshipTypeCode = relationshipType.Code
-			};
-			string copiedCaseID = _client.CopyCase(parameters);
-
-			Case copiedCase = _client.GetCase(copiedCaseID, new List<string> { "CaseInvolvedNames", "CaseRelationships" });
-			Assert.AreEqual(2, copiedCase.CaseInvolvedNames.Count, "Involvements");
-			Assert.AreEqual(1, copiedCase.CaseRelationships.Count, "Relationships");
-			string involvement = copiedCase.CaseInvolvedNames
-				.Where(i => i.NameID != _nameID)
-				.Select(i => i.InvolvementCode).FirstOrDefault();
-			Assert.AreEqual(codefendantInvolveType.Code, involvement, "Previous involvement type");
-			Assert.AreEqual(relationshipType.Code, copiedCase.CaseRelationships[0].RelationshipCode, "Relationship type");
+			//Setup parameters and copy case (cc4)
+			
+			//Check results (cc5)
 		}
 
 		[TestMethod]
 		public void CopyCaseHasBetterPerformance()
 		{
-			double manuallyCreatedSeconds = _client.CreateCases(100);
-			var parameters = new CopyCaseParameters
-			{
-				CaseID = _caseID,
-				NewPipNameID = _nameID
-			};
-			double copyEllapsedSeconds = ApiExtensions.TimeAction(() =>
-			{
-				for (int i = 0; i < 100; i++)
-				{
-					_client.CopyCase(parameters);
-				}
-			});
-			_logger.Info("Copying case 100 times took {0} seconds", copyEllapsedSeconds);
-
-			Assert.IsTrue(copyEllapsedSeconds < manuallyCreatedSeconds, "Copy case faster");
+			// Create 100 cases and measure time (cc6)
+			
+			// Copy 100 cases and measure time (cc7)
+			
+			// Compare speeds (cc8)
 		}
 	}
 }
